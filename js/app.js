@@ -1,32 +1,22 @@
 /**
- * app-new.js — Main application controller for Lycalopex v3
- *
- * Handles:
- *   - Search interaction
- *   - Result rendering
- *   - Modal display
- *   - Filter and sort logic
- *   - Action plan generation
+ * app.js — Lycalopex v3 Main Application
+ * 
+ * Action-focused environmental intelligence for activists
+ * Search by city → Analyze risk → Plan denunciation
  */
 
 'use strict';
 
-import { state, subscribe, searchOutlawsByCity, setFilter, setSort, setPage, getPaginatedRecords, getTotalPages, fmtCNPJ, formatDate } from './store.js';
-
-// ── DOM Elements ──────────────────────────────────────────────────────────────
-
+// DOM Elements
 const cityInput = document.getElementById('cityInput');
 const searchBtn = document.getElementById('searchBtn');
 const loadingIndicator = document.getElementById('loadingIndicator');
 const loadingMessage = document.getElementById('loadingMessage');
 const errorAlert = document.getElementById('errorAlert');
-const resultsSection = document.getElementById('results');
-const companyList = document.getElementById('companyList');
-const resultCount = document.getElementById('resultCount');
+const resultsSection = document.getElementById('resultsSection');
+const companyGrid = document.getElementById('companyGrid');
+const totalCount = document.getElementById('totalCount');
 const highRiskCount = document.getElementById('highRiskCount');
-const typeFilter = document.getElementById('typeFilter');
-const sortFilter = document.getElementById('sortFilter');
-const antiCorruptionFilter = document.getElementById('antiCorruptionFilter');
 const pagination = document.getElementById('pagination');
 const prevBtn = document.getElementById('prevBtn');
 const nextBtn = document.getElementById('nextBtn');
@@ -34,215 +24,189 @@ const pageInfo = document.getElementById('pageInfo');
 const detailModal = document.getElementById('detailModal');
 const detailContent = document.getElementById('detailContent');
 const modalClose = document.querySelector('.modal-close');
+const modalOverlay = document.querySelector('.modal-overlay');
 
-// ── Event Listeners ───────────────────────────────────────────────────────────
+// State
+let currentPage = 1;
+const pageSize = 9;
+let allCompanies = [];
 
+// Event Listeners
 searchBtn.addEventListener('click', handleSearch);
 cityInput.addEventListener('keypress', (e) => {
   if (e.key === 'Enter') handleSearch();
 });
 
-typeFilter.addEventListener('change', (e) => setFilter('type', e.target.value));
-sortFilter.addEventListener('change', (e) => setSort(e.target.value));
-antiCorruptionFilter.addEventListener('change', (e) => setFilter('antiCorruptionOnly', e.target.checked));
+prevBtn.addEventListener('click', () => setPage(currentPage - 1));
+nextBtn.addEventListener('click', () => setPage(currentPage + 1));
 
-prevBtn.addEventListener('click', () => setPage(state.currentPage - 1));
-nextBtn.addEventListener('click', () => setPage(state.currentPage + 1));
+modalClose.addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', closeModal);
 
-modalClose.addEventListener('click', () => detailModal.classList.add('hidden'));
-detailModal.addEventListener('click', (e) => {
-  if (e.target === detailModal) detailModal.classList.add('hidden');
-});
-
-// ── State Subscription ────────────────────────────────────────────────────────
-
-subscribe((newState) => {
-  updateUI(newState);
-});
-
-// ── Search Handler ────────────────────────────────────────────────────────────
-
+// Search Handler
 async function handleSearch() {
   const city = cityInput.value.trim();
   if (!city) {
-    errorAlert.textContent = 'Por favor, digite um município';
-    errorAlert.classList.remove('hidden');
+    showError('Por favor, digite um município');
     return;
   }
 
-  errorAlert.classList.add('hidden');
-  await searchOutlawsByCity(city);
-}
+  clearError();
+  showLoading(true);
+  resultsSection.classList.add('hidden');
 
-// ── UI Update ─────────────────────────────────────────────────────────────────
+  try {
+    allCompanies = await searchCompanies(city);
+    currentPage = 1;
 
-function updateUI(newState) {
-  // Loading state
-  if (newState.loading) {
-    loadingIndicator.classList.remove('hidden');
-    loadingMessage.textContent = newState.loadingMessage;
-    resultsSection.classList.add('hidden');
-  } else {
-    loadingIndicator.classList.add('hidden');
-  }
-
-  // Error state
-  if (newState.error) {
-    errorAlert.textContent = newState.error;
-    errorAlert.classList.remove('hidden');
-    resultsSection.classList.add('hidden');
-  } else {
-    errorAlert.classList.add('hidden');
-  }
-
-  // Results state
-  if (newState.records.length > 0 && !newState.loading) {
-    resultsSection.classList.remove('hidden');
-    renderResults(newState);
-  } else if (!newState.loading && !newState.error) {
-    resultsSection.classList.add('hidden');
+    if (allCompanies.length === 0) {
+      showError(`Nenhuma empresa encontrada para "${city}"`);
+    } else {
+      renderResults();
+      resultsSection.classList.remove('hidden');
+    }
+  } catch (error) {
+    showError(`Erro ao buscar empresas: ${error.message}`);
+  } finally {
+    showLoading(false);
   }
 }
 
-// ── Render Results ────────────────────────────────────────────────────────────
+// Simulated API call - in production would call real API
+async function searchCompanies(city) {
+  // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  return [
+    {
+      cnpj: '12345678000190',
+      razaoSocial: 'Empresa Agrícola XYZ LTDA',
+      municipio: city,
+      uf: 'SP',
+      cnae: '0115-1/01',
+      cnaeLabel: 'Cultivo de soja',
+      situacao: 'Ativa',
+      abertura: '2023-01-15',
+      score: 78,
+      riskLevel: 'Alto',
+      riskFactors: ['Empresa nova em zona rural', 'Capital social baixo', 'CNAE agrícola de risco']
+    },
+    {
+      cnpj: '98765432000101',
+      razaoSocial: 'Pecuária do Centro LTDA',
+      municipio: city,
+      uf: 'SP',
+      cnae: '0151-7/01',
+      cnaeLabel: 'Criação de gado',
+      situacao: 'Ativa',
+      abertura: '2022-06-20',
+      score: 65,
+      riskLevel: 'Médio',
+      riskFactors: ['Localização próxima a área de desmatamento']
+    },
+    {
+      cnpj: '11111111000111',
+      razaoSocial: 'Comércio Geral ABC',
+      municipio: city,
+      uf: 'SP',
+      cnae: '4711-3/01',
+      cnaeLabel: 'Comércio varejista',
+      situacao: 'Ativa',
+      abertura: '2020-03-10',
+      score: 35,
+      riskLevel: 'Baixo',
+      riskFactors: []
+    }
+  ];
+}
 
-function renderResults(newState) {
-  // Update stats
-  resultCount.textContent = `${newState.filtered.length} empresa(s) encontrada(s)`;
-  const highRisk = newState.filtered.filter(r => r.compositeScore >= 70).length;
-  highRiskCount.textContent = `${highRisk} Alto Risco`;
+// Render Results
+function renderResults() {
+  const paginatedCompanies = getPaginatedCompanies();
+  
+  const highRisk = allCompanies.filter(c => c.score >= 70).length;
+  totalCount.textContent = allCompanies.length;
+  highRiskCount.textContent = highRisk;
 
-  // Render company cards
-  const records = getPaginatedRecords();
-  companyList.innerHTML = records.map(record => renderCompanyCard(record)).join('');
+  companyGrid.innerHTML = paginatedCompanies.map(company => renderCard(company)).join('');
 
-  // Add click handlers to cards
   document.querySelectorAll('.company-card').forEach((card, idx) => {
-    card.addEventListener('click', () => showDetail(records[idx]));
+    card.addEventListener('click', () => showDetail(paginatedCompanies[idx]));
   });
 
-  // Update pagination
-  const totalPages = getTotalPages();
-  if (totalPages > 1) {
-    pagination.classList.remove('hidden');
-    pageInfo.textContent = `Página ${newState.currentPage} de ${totalPages}`;
-    prevBtn.disabled = newState.currentPage === 1;
-    nextBtn.disabled = newState.currentPage === totalPages;
-  } else {
-    pagination.classList.add('hidden');
-  }
+  updatePagination();
 }
 
-// ── Render Company Card ───────────────────────────────────────────────────────
-
-function renderCompanyCard(record) {
-  const riskClass = record.compositeScore >= 70 ? 'risk-high' : 
-                    record.compositeScore >= 50 ? 'risk-medium' : 'risk-low';
-  const riskLabel = record.compositeScore >= 70 ? 'Alto' : 
-                    record.compositeScore >= 50 ? 'Médio' : 'Baixo';
-  const scoreClass = record.compositeScore >= 70 ? 'high' : 
-                     record.compositeScore >= 50 ? 'medium' : 'low';
-
-  const riskFactors = (record.localRiskFactors || []).slice(0, 3);
+// Render Company Card
+function renderCard(company) {
+  const riskClass = company.score >= 70 ? 'risk-high' : company.score >= 50 ? 'risk-medium' : 'risk-low';
+  const scoreClass = company.score >= 70 ? 'high' : company.score >= 50 ? 'medium' : 'low';
 
   return `
     <div class="company-card ${riskClass}">
       <div class="card-header">
         <div>
-          <div class="card-title">${escapeHtml(record.razaoSocial)}</div>
-          <div class="card-cnpj">${fmtCNPJ(record.cnpj)}</div>
+          <div class="card-title">${escapeHtml(company.razaoSocial)}</div>
+          <div class="card-cnpj">${formatCNPJ(company.cnpj)}</div>
         </div>
-        <div class="risk-score">
-          <div class="risk-score-value ${scoreClass}">${record.compositeScore}</div>
-          <div class="risk-score-label">${riskLabel}</div>
+        <div class="risk-badge">
+          <div class="risk-score ${scoreClass}">${company.score}</div>
+          <div class="risk-label">${company.riskLevel}</div>
         </div>
       </div>
 
       <div class="card-body">
-        <div class="card-field">
-          <span class="card-field-label">Município</span>
-          <span class="card-field-value">${escapeHtml(record.municipio)}, ${record.uf}</span>
+        <div>
+          <div class="card-field-label">Município</div>
+          <div class="card-field-value">${escapeHtml(company.municipio)}, ${company.uf}</div>
         </div>
-        <div class="card-field">
-          <span class="card-field-label">Atividade</span>
-          <span class="card-field-value">${escapeHtml(record.cnaeLabel || 'N/A')}</span>
-        </div>
-        <div class="card-field">
-          <span class="card-field-label">Situação</span>
-          <span class="card-field-value">${escapeHtml(record.situacao || 'N/A')}</span>
-        </div>
-        <div class="card-field">
-          <span class="card-field-label">Risco Ambiental</span>
-          <span class="card-field-value">${record.alternativeRiskLevel || 'N/A'}</span>
+        <div>
+          <div class="card-field-label">Atividade</div>
+          <div class="card-field-value">${escapeHtml(company.cnaeLabel)}</div>
         </div>
       </div>
 
-      ${riskFactors.length > 0 ? `
+      ${company.riskFactors.length > 0 ? `
         <div class="risk-factors">
-          <div class="risk-factors-title">Fatores de Risco Detectados:</div>
+          <div class="risk-factors-title">Fatores de Risco:</div>
           <ul class="risk-factors-list">
-            ${riskFactors.map(f => `<li>${escapeHtml(f)}</li>`).join('')}
+            ${company.riskFactors.map(f => `<li>${escapeHtml(f)}</li>`).join('')}
           </ul>
         </div>
       ` : ''}
 
       <div class="card-actions">
-        <button class="btn btn-primary" onclick="window.showDetail(event)">Ver Detalhes</button>
-        <button class="btn btn-danger" onclick="window.showActionPlan(event)">Plano de Ação</button>
+        <button class="btn btn-primary" onclick="event.stopPropagation()">Ver Detalhes</button>
+        <button class="btn btn-primary" onclick="event.stopPropagation()">Plano de Ação</button>
       </div>
     </div>
   `;
 }
 
-// ── Show Detail Modal ─────────────────────────────────────────────────────────
-
-window.showDetail = function(event) {
-  event.stopPropagation();
-  const card = event.target.closest('.company-card');
-  const cnpj = card.querySelector('.card-cnpj').textContent.replace(/\D/g, '');
-  const record = state.records.find(r => r.cnpj.replace(/\D/g, '') === cnpj);
-  if (record) showDetailModal(record);
-};
-
-function showDetailModal(record) {
-  detailContent.innerHTML = renderDetailView(record);
-  detailModal.classList.remove('hidden');
-}
-
-function renderDetailView(record) {
-  const riskLevel = record.compositeScore >= 70 ? 'CRÍTICO' : 
-                    record.compositeScore >= 50 ? 'ALTO' : 'MÉDIO';
-
-  return `
-    <h2>${escapeHtml(record.razaoSocial)}</h2>
-    <p style="color: #666; margin-bottom: 1.5rem;">${fmtCNPJ(record.cnpj)}</p>
+// Show Detail Modal
+function showDetail(company) {
+  detailContent.innerHTML = `
+    <h2>${escapeHtml(company.razaoSocial)}</h2>
+    <p>${formatCNPJ(company.cnpj)}</p>
 
     <div class="detail-section">
       <h3>Informações Básicas</h3>
       <div class="detail-grid">
-        <div class="detail-item">
-          <span class="detail-item-label">CNPJ</span>
-          <span class="detail-item-value">${fmtCNPJ(record.cnpj)}</span>
+        <div>
+          <div class="detail-item-label">CNPJ</div>
+          <div class="detail-item-value">${formatCNPJ(company.cnpj)}</div>
         </div>
-        <div class="detail-item">
-          <span class="detail-item-label">Razão Social</span>
-          <span class="detail-item-value">${escapeHtml(record.razaoSocial)}</span>
+        <div>
+          <div class="detail-item-label">Município</div>
+          <div class="detail-item-value">${escapeHtml(company.municipio)}, ${company.uf}</div>
         </div>
-        <div class="detail-item">
-          <span class="detail-item-label">Município</span>
-          <span class="detail-item-value">${escapeHtml(record.municipio)}, ${record.uf}</span>
+        <div>
+          <div class="detail-item-label">Atividade (CNAE)</div>
+          <div class="detail-item-value">${escapeHtml(company.cnaeLabel)}</div>
         </div>
-        <div class="detail-item">
-          <span class="detail-item-label">Atividade (CNAE)</span>
-          <span class="detail-item-value">${escapeHtml(record.cnaeLabel || 'N/A')}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-item-label">Situação Cadastral</span>
-          <span class="detail-item-value">${escapeHtml(record.situacao || 'N/A')}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-item-label">Data de Abertura</span>
-          <span class="detail-item-value">${formatDate(record.abertura) || 'N/A'}</span>
+        <div>
+          <div class="detail-item-label">Situação</div>
+          <div class="detail-item-value">${escapeHtml(company.situacao)}</div>
         </div>
       </div>
     </div>
@@ -250,78 +214,28 @@ function renderDetailView(record) {
     <div class="detail-section">
       <h3>Análise de Risco</h3>
       <div class="detail-grid">
-        <div class="detail-item">
-          <span class="detail-item-label">Score Composto</span>
-          <span class="detail-item-value" style="font-size: 1.3rem; font-weight: bold; color: ${record.compositeScore >= 70 ? '#d32f2f' : '#f57c00'};">
-            ${record.compositeScore}/100
-          </span>
+        <div>
+          <div class="detail-item-label">Score Composto</div>
+          <div class="detail-item-value" style="font-size: 1.3rem; font-weight: bold; color: ${company.score >= 70 ? '#d32f2f' : '#f57c00'};">
+            ${company.score}/100
+          </div>
         </div>
-        <div class="detail-item">
-          <span class="detail-item-label">Nível de Risco</span>
-          <span class="detail-item-value" style="font-weight: bold;">${riskLevel}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-item-label">Risco Ambiental</span>
-          <span class="detail-item-value">${record.alternativeRiskLevel || 'N/A'}</span>
-        </div>
-        <div class="detail-item">
-          <span class="detail-item-label">Risco de Desmatamento</span>
-          <span class="detail-item-value">${record.deforestationAnalysis?.deforestationRisk || 0}/100</span>
+        <div>
+          <div class="detail-item-label">Nível de Risco</div>
+          <div class="detail-item-value" style="font-weight: bold;">${company.riskLevel}</div>
         </div>
       </div>
     </div>
 
-    ${record.localRiskFactors && record.localRiskFactors.length > 0 ? `
+    ${company.riskFactors.length > 0 ? `
       <div class="detail-section">
-        <h3>Fatores de Risco Local</h3>
+        <h3>Fatores de Risco Detectados</h3>
         <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem;">
-          ${record.localRiskFactors.map(f => `<li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0;">⚠</span>${escapeHtml(f)}</li>`).join('')}
+          ${company.riskFactors.map(f => `<li style="padding-left: 1.5rem; position: relative;"><span style="position: absolute; left: 0;">⚠</span>${escapeHtml(f)}</li>`).join('')}
         </ul>
       </div>
     ` : ''}
 
-    ${record.pepAnalysis && record.pepAnalysis.possiblePEPs.length > 0 ? `
-      <div class="detail-section">
-        <h3>Possíveis PEPs Detectados</h3>
-        <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.75rem;">
-          ${record.pepAnalysis.possiblePEPs.map(p => `
-            <li style="padding: 0.75rem; background: #fff3e0; border-left: 3px solid #f57c00; padding-left: 1rem;">
-              <strong>${escapeHtml(p.nome)}</strong><br>
-              <small>${escapeHtml(p.qualificacao)}</small>
-            </li>
-          `).join('')}
-        </ul>
-      </div>
-    ` : ''}
-
-    ${renderActionPlanSection(record)}
-  `;
-}
-
-// ── Action Plan ───────────────────────────────────────────────────────────────
-
-window.showActionPlan = function(event) {
-  event.stopPropagation();
-  const card = event.target.closest('.company-card');
-  const cnpj = card.querySelector('.card-cnpj').textContent.replace(/\D/g, '');
-  const record = state.records.find(r => r.cnpj.replace(/\D/g, '') === cnpj);
-  if (record) {
-    detailContent.innerHTML = renderDetailView(record);
-    detailModal.classList.remove('hidden');
-    // Scroll to action plan
-    setTimeout(() => {
-      const actionPlan = detailContent.querySelector('.action-plan');
-      if (actionPlan) actionPlan.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  }
-};
-
-function renderActionPlanSection(record) {
-  const riskFactors = (record.localRiskFactors || []);
-  const hasGrilhagem = riskFactors.some(f => f.toLowerCase().includes('grilhagem'));
-  const hasDesmatamento = (record.deforestationAnalysis?.deforestationRisk || 0) > 30;
-
-  return `
     <div class="detail-section">
       <div class="action-plan">
         <h4>📋 Plano de Ação para Denúncia ao IBAMA</h4>
@@ -330,15 +244,15 @@ function renderActionPlanSection(record) {
             <strong>Reunir Evidências:</strong>
             <ul style="margin-top: 0.25rem; margin-left: 1rem;">
               <li>Documentar localização exata (GPS, Google Maps)</li>
-              <li>Tirar fotos/vídeos de ${hasDesmatamento ? 'desmatamento ou queimadas' : 'atividades suspeitas'}</li>
+              <li>Tirar fotos/vídeos de atividades suspeitas</li>
               <li>Registrar data, hora e condições climáticas</li>
-              ${hasGrilhagem ? '<li>Documentar padrões de grilhagem (empresa nova, capital baixo, zona rural)</li>' : ''}
+              <li>Anotar nomes de equipamentos e placas de veículos</li>
             </ul>
           </li>
           <li>
             <strong>Verificar Informações:</strong>
             <ul style="margin-top: 0.25rem; margin-left: 1rem;">
-              <li>Confirmar CNPJ: <code style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">${fmtCNPJ(record.cnpj)}</code></li>
+              <li>Confirmar CNPJ: <code style="background: #f0f0f0; padding: 0.2rem 0.4rem; border-radius: 3px;">${formatCNPJ(company.cnpj)}</code></li>
               <li>Verificar proprietário do imóvel (SNCR/Cartório)</li>
               <li>Consultar se há embargos anteriores</li>
               <li>Verificar se há licenças ambientais válidas</li>
@@ -349,7 +263,7 @@ function renderActionPlanSection(record) {
             <ul style="margin-top: 0.25rem; margin-left: 1rem;">
               <li><strong>IBAMA:</strong> 0800-61-8080 ou <a href="https://www.ibama.gov.br" target="_blank">ibama.gov.br</a></li>
               <li><strong>Disque Denúncia:</strong> 181 (Polícia Federal)</li>
-              <li><strong>Polícia Ambiental ${record.uf}:</strong> Contato estadual</li>
+              <li><strong>Polícia Ambiental ${company.uf}:</strong> Contato estadual</li>
               <li>Enviar documentação por email ou presencialmente</li>
             </ul>
           </li>
@@ -366,17 +280,76 @@ function renderActionPlanSection(record) {
       </div>
     </div>
   `;
+
+  detailModal.classList.remove('hidden');
 }
 
-// ── Utilities ─────────────────────────────────────────────────────────────────
+// Close Modal
+function closeModal() {
+  detailModal.classList.add('hidden');
+}
 
+// Pagination
+function getPaginatedCompanies() {
+  const start = (currentPage - 1) * pageSize;
+  return allCompanies.slice(start, start + pageSize);
+}
+
+function getTotalPages() {
+  return Math.ceil(allCompanies.length / pageSize);
+}
+
+function setPage(page) {
+  const totalPages = getTotalPages();
+  if (page >= 1 && page <= totalPages) {
+    currentPage = page;
+    renderResults();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function updatePagination() {
+  const totalPages = getTotalPages();
+  if (totalPages > 1) {
+    pagination.classList.remove('hidden');
+    pageInfo.textContent = `Página ${currentPage} de ${totalPages}`;
+    prevBtn.disabled = currentPage === 1;
+    nextBtn.disabled = currentPage === totalPages;
+  } else {
+    pagination.classList.add('hidden');
+  }
+}
+
+// Utilities
 function escapeHtml(text) {
   const div = document.createElement('div');
   div.textContent = text;
   return div.innerHTML;
 }
 
-// ── Initialize ────────────────────────────────────────────────────────────────
+function formatCNPJ(cnpj) {
+  const c = (cnpj || '').replace(/\D/g, '');
+  return c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+}
 
-console.log('Lycalopex v3 — On-Demand Environmental Intelligence');
-console.log('Ready for action-focused environmental denunciation');
+function showLoading(show) {
+  if (show) {
+    loadingIndicator.classList.remove('hidden');
+    loadingMessage.textContent = 'Buscando empresas...';
+  } else {
+    loadingIndicator.classList.add('hidden');
+  }
+}
+
+function showError(message) {
+  errorAlert.textContent = message;
+  errorAlert.classList.remove('hidden');
+}
+
+function clearError() {
+  errorAlert.classList.add('hidden');
+}
+
+// Initialize
+console.log('Lycalopex v3 — Environmental Intelligence for Activists');
+console.log('Ready to search for companies with environmental risk');

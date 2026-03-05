@@ -3,51 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Lycalopex v3 — Plano de Ação para Denúncia Ambiental</title>
-  <link rel="stylesheet" href="style-new.css">
+  <title>Lycalopex — Plano de Ação Ambiental</title>
+  <link rel="stylesheet" href="style.css">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='75' font-size='75'>🐺</text></svg>">
 </head>
 <body>
   <div id="app" class="app">
     <!-- Header -->
     <header class="header">
-      <div class="header-content">
+      <div class="header-container">
         <div class="logo">
           <span class="logo-icon">🐺</span>
           <div class="logo-text">
             <h1>Lycalopex</h1>
-            <p>Plano de Ação para Denúncia Ambiental</p>
+            <p>Inteligência Ambiental para Ativistas</p>
           </div>
         </div>
-        <nav class="nav">
-          <a href="#search" class="nav-link active">Buscar</a>
-          <a href="#guide" class="nav-link">Guia de Denúncia</a>
-          <a href="#about" class="nav-link">Sobre</a>
-        </nav>
       </div>
     </header>
 
     <!-- Main Content -->
     <main class="main">
-      <!-- Search Section -->
-      <section id="search" class="section search-section">
-        <div class="container">
-          <h2>Buscar Empresas por Município</h2>
-          <p class="subtitle">Digite o nome da cidade e estado para encontrar empresas com risco ambiental</p>
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="hero-container">
+          <h2>Encontre Empresas com Risco Ambiental</h2>
+          <p>Digite o nome de uma cidade para descobrir quais empresas merecem ser denunciadas ao IBAMA</p>
           
-          <div class="search-box">
+          <div class="search-container">
             <input 
               type="text" 
               id="cityInput" 
               placeholder="Ex: São Paulo, SP ou Assis Chateaubriand, PR"
               class="search-input"
+              autocomplete="off"
             >
-            <button id="searchBtn" class="btn btn-primary">Buscar</button>
+            <button id="searchBtn" class="btn btn-primary btn-lg">Buscar</button>
           </div>
 
           <div id="loadingIndicator" class="loading-indicator hidden">
             <div class="spinner"></div>
-            <p id="loadingMessage">Carregando...</p>
+            <p id="loadingMessage">Analisando empresas...</p>
           </div>
 
           <div id="errorAlert" class="alert alert-danger hidden"></div>
@@ -55,47 +51,24 @@
       </section>
 
       <!-- Results Section -->
-      <section id="results" class="section results-section hidden">
-        <div class="container">
+      <section id="resultsSection" class="results-section hidden">
+        <div class="results-container">
           <div class="results-header">
-            <h2>Resultados da Busca</h2>
+            <h2 id="resultsTitle">Empresas Encontradas</h2>
             <div class="results-stats">
-              <span id="resultCount">0 empresas encontradas</span>
-              <span id="highRiskCount" class="badge badge-danger">0 Alto Risco</span>
+              <div class="stat">
+                <span class="stat-label">Total</span>
+                <span class="stat-value" id="totalCount">0</span>
+              </div>
+              <div class="stat danger">
+                <span class="stat-label">Alto Risco</span>
+                <span class="stat-value" id="highRiskCount">0</span>
+              </div>
             </div>
           </div>
 
-          <!-- Filters -->
-          <div class="filters">
-            <div class="filter-group">
-              <label>Nível de Risco:</label>
-              <select id="typeFilter" class="filter-select">
-                <option value="all">Todos</option>
-                <option value="high">Alto Risco (≥70)</option>
-                <option value="medium">Médio Risco (50-69)</option>
-                <option value="low">Baixo Risco (<50)</option>
-              </select>
-            </div>
-
-            <div class="filter-group">
-              <label>Ordenar por:</label>
-              <select id="sortFilter" class="filter-select">
-                <option value="scoreDesc">Score Descendente</option>
-                <option value="nameAsc">Nome (A-Z)</option>
-                <option value="vulnerabilityDesc">Vulnerabilidade</option>
-              </select>
-            </div>
-
-            <div class="filter-group checkbox">
-              <label>
-                <input type="checkbox" id="antiCorruptionFilter">
-                Apenas com Risco de Corrupção
-              </label>
-            </div>
-          </div>
-
-          <!-- Company Cards -->
-          <div id="companyList" class="company-list">
+          <!-- Company Cards Grid -->
+          <div id="companyGrid" class="company-grid">
             <!-- Populated by JavaScript -->
           </div>
 
@@ -110,61 +83,82 @@
 
       <!-- Company Detail Modal -->
       <div id="detailModal" class="modal hidden">
+        <div class="modal-overlay"></div>
         <div class="modal-content">
           <button class="modal-close">&times;</button>
-          <div id="detailContent">
+          <div id="detailContent" class="detail-content">
             <!-- Populated by JavaScript -->
           </div>
         </div>
       </div>
 
+      <!-- Info Section -->
+      <section class="info-section">
+        <div class="info-container">
+          <h2>Como Funciona</h2>
+          <div class="info-grid">
+            <div class="info-card">
+              <div class="info-number">1</div>
+              <h3>Busque uma Cidade</h3>
+              <p>Digite o nome de qualquer município do Brasil para encontrar empresas com risco ambiental</p>
+            </div>
+            <div class="info-card">
+              <div class="info-number">2</div>
+              <h3>Analise o Risco</h3>
+              <p>Veja quais empresas têm maior probabilidade de infrações ambientais baseado em múltiplos indicadores</p>
+            </div>
+            <div class="info-card">
+              <div class="info-number">3</div>
+              <h3>Planeje a Denúncia</h3>
+              <p>Receba um plano passo a passo de como denunciar ao IBAMA com todas as informações necessárias</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Guide Section -->
-      <section id="guide" class="section guide-section">
-        <div class="container">
-          <h2>Guia de Denúncia ao IBAMA</h2>
-          
-          <div class="guide-content">
-            <div class="guide-card">
-              <h3>📋 Passo 1: Reunir Evidências</h3>
+      <section class="guide-section">
+        <div class="guide-container">
+          <h2>Guia Rápido de Denúncia</h2>
+          <div class="guide-steps">
+            <div class="step">
+              <div class="step-number">1</div>
+              <h3>Reunir Evidências</h3>
               <ul>
-                <li>Documentar localização exata (GPS, Google Maps)</li>
-                <li>Tirar fotos/vídeos de desmatamento ou queimadas</li>
-                <li>Registrar data, hora e condições climáticas</li>
-                <li>Anotar nomes de equipamentos, placas de veículos</li>
-                <li>Coletar depoimentos de testemunhas</li>
+                <li>Documentar localização (GPS, Google Maps)</li>
+                <li>Fotos/vídeos de desmatamento ou queimadas</li>
+                <li>Data, hora e condições climáticas</li>
+                <li>Placas de veículos e equipamentos</li>
               </ul>
             </div>
-
-            <div class="guide-card">
-              <h3>🔍 Passo 2: Verificar Informações</h3>
+            <div class="step">
+              <div class="step-number">2</div>
+              <h3>Verificar Informações</h3>
               <ul>
-                <li>Confirmar CNPJ e razão social da empresa</li>
-                <li>Verificar se há embargos anteriores</li>
-                <li>Consultar proprietário do imóvel (SNCR/Cartório)</li>
-                <li>Verificar se há licenças ambientais válidas</li>
-                <li>Documentar inconsistências (empresa nova, capital baixo, etc)</li>
+                <li>Confirmar CNPJ da empresa</li>
+                <li>Verificar proprietário do imóvel</li>
+                <li>Consultar embargos anteriores</li>
+                <li>Validar licenças ambientais</li>
               </ul>
             </div>
-
-            <div class="guide-card">
-              <h3>📞 Passo 3: Fazer a Denúncia</h3>
+            <div class="step">
+              <div class="step-number">3</div>
+              <h3>Fazer a Denúncia</h3>
               <ul>
-                <li><strong>IBAMA:</strong> 0800-61-8080 ou <a href="https://www.ibama.gov.br" target="_blank">ibama.gov.br</a></li>
-                <li><strong>Disque Denúncia:</strong> 181 (Polícia Federal)</li>
-                <li><strong>Polícia Ambiental:</strong> Contato estadual</li>
-                <li><strong>Ministério Público:</strong> MP estadual ou federal</li>
-                <li>Enviar documentação por email ou presencialmente</li>
+                <li><strong>IBAMA:</strong> 0800-61-8080</li>
+                <li><strong>Disque Denúncia:</strong> 181</li>
+                <li><strong>Polícia Ambiental:</strong> Estadual</li>
+                <li><strong>Ministério Público:</strong> Federal/Estadual</li>
               </ul>
             </div>
-
-            <div class="guide-card">
-              <h3>⚖️ Passo 4: Acompanhamento</h3>
+            <div class="step">
+              <div class="step-number">4</div>
+              <h3>Acompanhar</h3>
               <ul>
-                <li>Solicitar número do protocolo de denúncia</li>
-                <li>Acompanhar via Portal de Transparência do IBAMA</li>
-                <li>Apresentar novas evidências se necessário</li>
-                <li>Contatar MP se houver demora na investigação</li>
-                <li>Documentar resposta das autoridades</li>
+                <li>Solicitar protocolo de denúncia</li>
+                <li>Acompanhar no Portal IBAMA</li>
+                <li>Enviar novas evidências</li>
+                <li>Contatar MP se necessário</li>
               </ul>
             </div>
           </div>
@@ -172,20 +166,20 @@
       </section>
 
       <!-- About Section -->
-      <section id="about" class="section about-section">
-        <div class="container">
+      <section class="about-section">
+        <div class="about-container">
           <h2>Sobre o Lycalopex</h2>
           <p>
-            Lycalopex é uma ferramenta de inteligência ambiental que ajuda ativistas, pesquisadores e 
-            cidadãos a identificar empresas com risco de infrações ambientais em qualquer município do Brasil.
+            Lycalopex é uma ferramenta de inteligência ambiental que ajuda ativistas, pesquisadores e cidadãos 
+            a identificar empresas com risco de infrações ambientais em qualquer município do Brasil.
           </p>
           <p>
             Utilizamos dados públicos de múltiplas fontes (Brasil.IO, IBAMA, INPE, CNPJ.ws) para análise 
             em tempo real, sem dependência de portais governamentais centralizados.
           </p>
           <h3>Fontes de Dados</h3>
-          <ul>
-            <li><strong>Brasil.IO:</strong> Dados de empresas, sócios, histórico</li>
+          <ul class="sources-list">
+            <li><strong>Brasil.IO:</strong> Dados de empresas, sócios e histórico</li>
             <li><strong>CNPJ.ws:</strong> Informações cadastrais de CNPJ</li>
             <li><strong>IBAMA:</strong> Embargos e autuações ambientais</li>
             <li><strong>INPE:</strong> Queimadas e desmatamento</li>
@@ -202,6 +196,6 @@
     </footer>
   </div>
 
-  <script type="module" src="js/app-new.js"></script>
+  <script type="module" src="js/app.js"></script>
 </body>
 </html>
