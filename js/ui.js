@@ -78,6 +78,10 @@ export function initUI() {
   const demoBtn = document.getElementById('btn-demo');
   if (demoBtn) {
     demoBtn.addEventListener('click', () => {
+      if (!DEMO_CNPJS.length) {
+        showToast('Nenhum CNPJ demo configurado.', 'warn');
+        return;
+      }
       cnpjInput.value = DEMO_CNPJS.join('\n');
       handleLoad();
     });

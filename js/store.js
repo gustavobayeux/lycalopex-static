@@ -336,33 +336,97 @@ export function exportCSV() {
 // ── Live Outlaw Search ──────────────────────────────────────────────────────────
 
 /**
- * Search for 'outlaws' (companies with alerts) in a specific city.
- * In a production environment, this would call a backend.
- * For this version, it queries the regional environmental index.
+ * Normalize a string for fuzzy comparison:
+ * lowercase, remove accents, collapse spaces.
+ * @param {string} str
+ * @returns {string}
+ */
+function normalizeCity(str) {
+  return (str || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+/**
+ * Find the best matching city key(s) in the regional data using fuzzy/partial matching.
+ * Returns an array of matched keys (uppercase), sorted by match quality.
+ * @param {string} query
+ * @param {string[]} availableKeys
+ * @returns {string[]}
+ */
+function findMatchingCities(query, availableKeys) {
+  const q = normalizeCity(query);
+  if (!q) return [];
+
+  const exact = [];
+  const startsWith = [];
+  const contains = [];
+
+  for (const key of availableKeys) {
+    const norm = normalizeCity(key);
+    if (norm === q) {
+      exact.push(key);
+    } else if (norm.startsWith(q) || q.startsWith(norm)) {
+      startsWith.push(key);
+    } else if (norm.includes(q) || q.includes(norm)) {
+      contains.push(key);
+    }
+  }
+
+  return [...exact, ...startsWith, ...contains];
+}
+
+/**
+ * Search for 'outlaws' (companies with IBAMA embargoes) in a specific city.
+ * Uses fuzzy/partial matching against the regional environmental index.
+ * Falls back to nearby/similar city names when no exact match is found.
  */
 export async function searchOutlawsByCity(cityName) {
   state.loading = true;
+  state.error = null;
   state.loadingMessage = `Buscando infratores em ${cityName}...`;
   state.records = [];
   notify();
 
   try {
     const response = await fetch('data/ibama-regional.json');
-    if (response.ok) {
-      const regionalData = await response.json();
-      const cityKey = cityName.toUpperCase();
-      const cityCompanies = regionalData[cityKey] || [];
+    if (!response.ok) throw new Error('Falha ao carregar base regional');
 
-      if (cityCompanies.length === 0) {
-        state.error = `Nenhum registro de infração ambiental encontrado para ${cityName} nesta base.`;
-      } else {
-        // Load the first 10 for performance
-        const cnpjs = cityCompanies.slice(0, 10).map(c => c.cnpj);
-        await loadCNPJs(cnpjs);
+    const regionalData = await response.json();
+    const availableKeys = Object.keys(regionalData);
+
+    // Fuzzy match: exact > starts-with > contains
+    const matchedKeys = findMatchingCities(cityName, availableKeys);
+
+    if (matchedKeys.length === 0) {
+      state.loading = false;
+      state.error = `Nenhum registro de infração ambiental encontrado para "${cityName}" na base do IBAMA (${availableKeys.length} municípios cobertos). Tente um município vizinho.`;
+      notify();
+      return;
+    }
+
+    // Collect all companies from matched cities (up to 15 total)
+    const allCompanies = [];
+    const matchedNames = [];
+    for (const key of matchedKeys) {
+      const companies = regionalData[key] || [];
+      matchedNames.push(key);
+      for (const c of companies) {
+        if (allCompanies.length < 15) allCompanies.push(c);
       }
     }
+
+    state.loadingMessage = `Encontrado(s): ${matchedNames.join(', ')} — ${allCompanies.length} empresa(s) com embargo IBAMA`;
+    notify();
+
+    const cnpjs = allCompanies.map(c => c.cnpj);
+    await loadCNPJs(cnpjs);
+
   } catch (e) {
-    state.error = "Erro ao carregar base regional.";
+    state.error = 'Erro ao carregar base regional IBAMA.';
     console.error(e);
   }
 
@@ -370,7 +434,19 @@ export async function searchOutlawsByCity(cityName) {
   notify();
 }
 
-export const DEMO_CNPJS = [];
+// CNPJs reais com embargos IBAMA no PR (Cascavel, Toledo, Foz do Iguaçu, Curitiba, Guarapuava)
+export const DEMO_CNPJS = [
+  '42801774000161', // Cascavel
+  '03387382000146', // Cascavel
+  '77602613000123', // Toledo
+  '02102907000197', // Toledo
+  '05210229000174', // Foz do Iguaçu
+  '16630764000109', // Foz do Iguaçu
+  '27203064000146', // Curitiba
+  '29302631000147', // Curitiba
+  '04678885000133', // Guarapuava
+  '00567480000177', // Guarapuava
+];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
