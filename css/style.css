@@ -417,3 +417,69 @@
   .row-detail.hidden { display: none !important; }
   .detail-panel { border: none; box-shadow: none; }
 }
+
+/* ── City Search & Outlaw Mode ───────────────────────────────────────── */
+.city-search-box {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.btn-risk {
+  background: #E53E3E;
+  color: white;
+  border: none;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-risk:hover {
+  background: #C53030;
+  box-shadow: 0 0 8px rgba(229, 62, 62, 0.4);
+}
+
+.toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.toggle-slider {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  background-color: #CBD5E0;
+  border-radius: 20px;
+  transition: .3s;
+}
+
+.toggle-slider:before {
+  position: absolute;
+  content: "";
+  height: 14px;
+  width: 14px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  border-radius: 50%;
+  transition: .3s;
+}
+
+input:checked + .toggle-slider {
+  background-color: #E53E3E;
+}
+
+input:checked + .toggle-slider:before {
+  transform: translateX(16px);
+}
+
+.toggle-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #4A5568;
+}
+
+input[type="checkbox"]#toggle-outlaw-only {
+  display: none;
+}

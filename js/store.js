@@ -53,6 +53,7 @@ export const state = {
     minScore: 0,
     maxScore: 100,
     antiCorruption: '',
+    outlawOnly: false,
   },
   sort: {
     field: 'vulnerability',
@@ -258,6 +259,10 @@ export function applyFilters() {
     });
   }
 
+  if (state.filters.outlawOnly) {
+    result = result.filter(r => r.ibamaStatus === 'Alerta Ambiental' || r.antiCorruptionStatus === 'Alerta');
+  }
+
   // Sort
   result.sort((a, b) => {
     let av, bv;
@@ -328,25 +333,44 @@ export function exportCSV() {
   URL.revokeObjectURL(url);
 }
 
-// ── Demo CNPJ list ────────────────────────────────────────────────────────────
+// ── Live Outlaw Search ──────────────────────────────────────────────────────────
 
-export const DEMO_CNPJS = [
-  '02916265000160', // JBS S/A
-  '01838723000127', // BRF S/A
-  '61064929000100', // Copersucar
-  '08070508000178', // Raízen Energia
-  '77294254000164', // Amaggi
-  '75593551000107', // Coamo
-  '76606564000186', // Cocamar
-  '03853896000140', // Marfrig
-  '67620377000114', // Minerva Foods
-  '47508411000156', // Cargill Agrícola
-  '33453729000172', // Exemplo com embargo ambiental
-  '42032520000126', // Exemplo com embargo ambiental
-  '49338432000104', // Exemplo com embargo ambiental
-  '20042630000136', // Exemplo com embargo ambiental
-  '41637164000101', // Exemplo com embargo ambiental
-];
+/**
+ * Search for 'outlaws' (companies with alerts) in a specific city.
+ * In a production environment, this would call a backend.
+ * For this version, it queries the regional environmental index.
+ */
+export async function searchOutlawsByCity(cityName) {
+  state.loading = true;
+  state.loadingMessage = `Buscando infratores em ${cityName}...`;
+  state.records = [];
+  notify();
+
+  try {
+    const response = await fetch('data/ibama-regional.json');
+    if (response.ok) {
+      const regionalData = await response.json();
+      const cityKey = cityName.toUpperCase();
+      const cityCompanies = regionalData[cityKey] || [];
+
+      if (cityCompanies.length === 0) {
+        state.error = `Nenhum registro de infração ambiental encontrado para ${cityName} nesta base.`;
+      } else {
+        // Load the first 10 for performance
+        const cnpjs = cityCompanies.slice(0, 10).map(c => c.cnpj);
+        await loadCNPJs(cnpjs);
+      }
+    }
+  } catch (e) {
+    state.error = "Erro ao carregar base regional.";
+    console.error(e);
+  }
+
+  state.loading = false;
+  notify();
+}
+
+export const DEMO_CNPJS = [];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -11,30 +11,41 @@
 
 'use strict';
 
-import { state, setFilter, setSort, exportCSV, loadCNPJs, DEMO_CNPJS } from './store.js';
+import { state, setFilter, setSort, exportCSV, loadCNPJs, searchOutlawsByCity, DEMO_CNPJS } from './store.js';
 
 // ── DOM references ────────────────────────────────────────────────────────────
 
-let tableBody, statsBar, filterCity, filterType, filterAntiCorr,
+let tableBody, statsBar, citySearchInput, btnOutlawSearch, toggleOutlawOnly, filterType, filterAntiCorr,
     loadingOverlay, loadingMsg, errorBanner, recordCount, exportBtn,
     cnpjInput, loadBtn;
 
 export function initUI() {
-  tableBody     = document.getElementById('table-body');
-  statsBar      = document.getElementById('stats-bar');
-  filterCity    = document.getElementById('filter-city');
-  filterType    = document.getElementById('filter-type');
-  filterAntiCorr= document.getElementById('filter-anticorr');
-  loadingOverlay= document.getElementById('loading-overlay');
-  loadingMsg    = document.getElementById('loading-msg');
-  errorBanner   = document.getElementById('error-banner');
-  recordCount   = document.getElementById('record-count');
-  exportBtn     = document.getElementById('btn-export');
-  cnpjInput     = document.getElementById('cnpj-input');
-  loadBtn       = document.getElementById('btn-load');
+  tableBody       = document.getElementById('table-body');
+  statsBar        = document.getElementById('stats-bar');
+  citySearchInput = document.getElementById('city-search-input');
+  btnOutlawSearch = document.getElementById('btn-outlaw-search');
+  toggleOutlawOnly= document.getElementById('toggle-outlaw-only');
+  filterType      = document.getElementById('filter-type');
+  filterAntiCorr  = document.getElementById('filter-anticorr');
+  loadingOverlay  = document.getElementById('loading-overlay');
+  loadingMsg      = document.getElementById('loading-msg');
+  errorBanner     = document.getElementById('error-banner');
+  recordCount     = document.getElementById('record-count');
+  exportBtn       = document.getElementById('btn-export');
+  cnpjInput       = document.getElementById('cnpj-input');
+  loadBtn         = document.getElementById('btn-load');
 
   // Filter events
-  filterCity.addEventListener('input', e => setFilter('city', e.target.value));
+  citySearchInput.addEventListener('input', e => setFilter('city', e.target.value));
+  btnOutlawSearch.addEventListener('click', () => {
+    const city = citySearchInput.value.trim();
+    if (city) {
+      searchOutlawsByCity(city);
+    } else {
+      showToast('Informe uma cidade para buscar infratores.', 'warn');
+    }
+  });
+  toggleOutlawOnly.addEventListener('change', e => setFilter('outlawOnly', e.target.checked));
   filterType.addEventListener('change', e => setFilter('type', e.target.value));
   filterAntiCorr.addEventListener('change', e => setFilter('antiCorruption', e.target.value));
 
@@ -167,7 +178,7 @@ function renderTable(s) {
           <div class="empty-inner">
             <div class="empty-icon">⬡</div>
             <p>Nenhuma estrutura carregada.</p>
-            <p class="empty-sub">Informe CNPJs no campo acima ou clique em <strong>Carregar Demo</strong>.</p>
+            <p class="empty-sub">Informe CNPJs no campo acima ou use o <strong>Modo Infrator</strong> para buscar por cidade.</p>
           </div>
         </td>
       </tr>`;

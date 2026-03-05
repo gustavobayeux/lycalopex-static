@@ -1,0 +1,797 @@
+{
+  "TOLEDO": [
+    {
+      "cnpj": "75215756000157",
+      "entries": [
+        {
+          "num_tad": "494155",
+          "data": "2011-09-21 15:10:00",
+          "area": null,
+          "municipio": "Toledo",
+          "uf": "PR",
+          "descricao": "FICAM EMBARGADAS AS ATIVIDADES DE RECEBIMENTO, SECAGEM E ARMAZENAMENTO DE GRÃOS, OFIICNA DE MANUTENÇÃO MECÂNICA E ABASTECIMENTO/LAVAGEM DE VEÍCULOS ATÉ A OBTENÇÃO DA LICENÇA DE OPERAÇÃO OU DOCUMENTO AUTORIZATIVO DO IAP/PR.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "07092934000140",
+      "entries": [
+        {
+          "num_tad": "565404",
+          "data": "2010-11-09 15:36:00",
+          "area": null,
+          "municipio": "Toledo",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA A ATIVIDADE DE INDUSTRIALIZAÇÃO DE PESCADO ATÉ A REGULARIZAÇÃO COM A OBTENÇÃO DA LICENÇA DE OPERAÇÃO.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "77602613000123",
+      "entries": [
+        {
+          "num_tad": "362594",
+          "data": "2008-03-13 11:30:00",
+          "area": null,
+          "municipio": "Toledo",
+          "uf": "PR",
+          "descricao": "FICAM EMBARGADAS AS ATIVIDADES DESENVOLVIDAS PELA EMPRESA,ATÉ A REGULARIZAÇÃO DA LICENÇA DE OPERAÇÃO E DAS PENDÊNCIAS ADMINISTRATIVAS JUNTO AO IBAMA.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "02102907000197",
+      "entries": [
+        {
+          "num_tad": "362593",
+          "data": "2008-03-12 15:10:00",
+          "area": null,
+          "municipio": "Toledo",
+          "uf": "PR",
+          "descricao": "FICAM EMBARGADAS AS ATIVIDADES DESENVOLVIDAS PELA EMPRESA ATÉ A REGULARIZAÇÃO DA LICENÇA DE OPERAÇÃO E DAS PROVIDÊNCIAS ADMINISTRATIVAS JUNTO AO IBAMA.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "08945886000158",
+      "entries": [
+        {
+          "num_tad": "363849",
+          "data": "2008-03-12 14:55:00",
+          "area": null,
+          "municipio": "Toledo",
+          "uf": "PR",
+          "descricao": "FICAM EMBARGADAS AS ATIVIDADE DESENVOLVIDAS PELA EMPRESA, ATÉ A REGULARIZAÇÃO DA LICENÇA DE OPERAÇÃO E DAS PROVIDENCIAS ADMINISTRATIVAS JUNTO AO IBAMA",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "08744315000155",
+      "entries": [
+        {
+          "num_tad": "362592",
+          "data": "2008-03-12 11:45:00",
+          "area": null,
+          "municipio": "Toledo",
+          "uf": "PR",
+          "descricao": "FICAM EMBARGADAS AS ATIVIDADES DESENVOLVIDAS PELA EMPRESA ATÉ A REGULARIZAÇÃO DA LICENÇA DE OPERAÇÃO E DAS PENDÊNCIAS ADMINISTRATIVAS JUNTO AO IBAMA.",
+          "tipo": null
+        }
+      ]
+    }
+  ],
+  "CASCAVEL": [
+    {
+      "cnpj": "42801774000161",
+      "entries": [
+        {
+          "num_tad": "OLGB3TQ6",
+          "data": "2026-02-13 13:33:49",
+          "area": null,
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "Fica embargada a atividade de beneficiamento de subprodutos florestais da empresa no local onde tem exercido suas atividades até sua regularização ambiental.",
+          "tipo": "Desmatamento"
+        }
+      ]
+    },
+    {
+      "cnpj": "03387382000146",
+      "entries": [
+        {
+          "num_tad": "700695",
+          "data": "2015-03-02 10:57:00",
+          "area": null,
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "Fica embargada toda a atividade do empreendimento Criadouro Conservacionista da Fauna silvestre - Vietnam Massas Ltda no que se refere à entrada ou saída de espécimes e qualquer tipo de alienação, sendo também proibida a reprodução ou qualquer forma de uso dos animais, produtos ou subprodutos com o objetivo ou não de auferir lucro. Excetuam-se os procedimentos necessários para garantia de bem-estar dos espécimes sob a responsabilidade do empreendimento.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "02203539000173",
+      "entries": [
+        {
+          "num_tad": "700694",
+          "data": "2015-03-02 09:16:00",
+          "area": null,
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "Fica embargada toda a atividade do empreendimento Fundação Assis Gurgacz - Criadouro Conservacionista da Fauna Silvestre no que se refere à entrada ou saída de espécimes e qualquer tipo de alienação, sendo também proibida a reprodução ou qualquer forma de uso dos animais, produtos ou subprodutos com o objetivo ou não de auferir lucro. Excetuam-se os procedimentos necessários para garantia de bem-estar dos espécimes sob a responsabilidade do empreendimento.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "02936462000140",
+      "entries": [
+        {
+          "num_tad": "452133",
+          "data": "2012-08-05 22:40:00",
+          "area": "0,0309",
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "DEVIDO AS IRREGULARIDADES APONTADAS PELO AUTO DE INFRAÇÃO EM QUESTÃO, FICAM EMBARGADAS AS ATIVIDADES DE REALIZAÇÃO DE TORNEIO DE PÁSSAROS CANOROS.",
+          "tipo": "Atividade"
+        }
+      ]
+    },
+    {
+      "cnpj": "03358802000166",
+      "entries": [
+        {
+          "num_tad": "363111",
+          "data": "2010-01-22 17:10:00",
+          "area": null,
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADO O ESTABELECIMENTO DE COMERCIO DE COMBUSTÍVEIS ATÉ A MANIFESTAÇÃO ULTERIOR DA AUTORIDADE COMPETENTE.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "82368846000143",
+      "entries": [
+        {
+          "num_tad": "493098",
+          "data": "2010-01-15 09:05:00",
+          "area": "0,0309",
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADO O ESTABELECIMENTO DE COMERCIO DE COMBUSTÍVEIS NO ENDEREÇO ACIMA ATÉ A MANIFESTAÇÃO ULTERIOR DA AUTORIDADE COMPETENTE.",
+          "tipo": "Atividade"
+        }
+      ]
+    },
+    {
+      "cnpj": "02041262000120",
+      "entries": [
+        {
+          "num_tad": "368685",
+          "data": "2007-11-28 16:40:00",
+          "area": null,
+          "municipio": "Caldas Novas",
+          "uf": "GO",
+          "descricao": "FICA SUSPENSO AS ATIVIDADES COM A VISITAÇAO, MANTENDO APENAS O MONITÓRAMENTO E TRATO DOS ANIMAIS, ATÉ LIBERAÇAO JUNTO AO ORGAO AMBIENTAL COMPETENTE.",
+          "tipo": null
+        },
+        {
+          "num_tad": "452797",
+          "data": "2007-02-15 18:30:00",
+          "area": "0,0309",
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "POR INFRINGÊNCIA AO ART. 29 DA LEI 9605/98 FICA EMBARGADA PARA VISITAÇÃO PÚBLICA LOCAL DE EXPOSIÇÃO DE PEIXES NO INTERIOR DO SHOPPING JL.",
+          "tipo": "Atividade"
+        }
+      ]
+    },
+    {
+      "cnpj": "02737928000340",
+      "entries": [
+        {
+          "num_tad": "363859",
+          "data": "2006-09-25 12:00:00",
+          "area": "0,0309",
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "POR INFRINGÊNCIA AO ARTIGO 60 DA LEI 9605/98: FICA EMBARGADA A ATIVIDADE DE USINA DE ASFALTO POR NÃO POSSUIR LICENÇA DE OPERAÇÃO CONFORME LEGISLAÇÃO. COORDENADAS GEOGRÁFICAS: 25°00'16,7S 053°26'29,5''W",
+          "tipo": "Atividade"
+        }
+      ]
+    },
+    {
+      "cnpj": "04772338000112",
+      "entries": [
+        {
+          "num_tad": "364364",
+          "data": "2003-11-27 08:50:00",
+          "area": null,
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA AS ATIVIDADES DA EMPRESA ACIMA COMO INDUSTRIA E COMERCIO DE BATERIAS",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "03076142000120",
+      "entries": [
+        {
+          "num_tad": "364363",
+          "data": "2003-11-27 08:30:00",
+          "area": null,
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA AS ATIVIDADES DA EMPRESA COMO INDUSTRIA E COMERCIO DE BATERIAS",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "01802055000188",
+      "entries": [
+        {
+          "num_tad": "364365",
+          "data": "2003-11-26 17:40:00",
+          "area": null,
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "- FICA EMBARGADA AS ATIVIDADES DA EMPRESA ACIMA COMO INDUSTRIA E COMERCIO DE BATERIAS",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "02207760000108",
+      "entries": [
+        {
+          "num_tad": "364358",
+          "data": "2003-10-24 17:11:00",
+          "area": null,
+          "municipio": "Cascavel",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA A CONTINUIDADE E INDUSTRIA E COMERCIO DE BATERIAS JOMAX, NO ENDEREÇO A BR 467 - KM 01 - CASCAVEL - PARANPA.",
+          "tipo": null
+        }
+      ]
+    }
+  ],
+  "FOZ DO IGUAÇU": [
+    {
+      "cnpj": "05210229000174",
+      "entries": [
+        {
+          "num_tad": "SXLCBMJM",
+          "data": "2021-08-03 16:29:40",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Fica embargada a atividade de comércio e beneficiamento de produto florestal até a regularização am",
+          "tipo": "Desmatamento"
+        },
+        {
+          "num_tad": "SXLCBMJM",
+          "data": "2021-08-03 16:29:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Fica embargada a atividade de comércio e beneficiamento de produto florestal até a regularização ambiental da empresa e emissão de Licença de Operação e/ou decisão da autoridade competente.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "16630764000109",
+      "entries": [
+        {
+          "num_tad": "822217",
+          "data": "2019-05-24 09:22:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Com fundamento no Decreto nº 6514/2008, art 3º, VII, IX e art 66, fica embargada a atividade, potencialmente poluidora, de transporte de produtos perigosos até a obtenção de licença ambiental emitida pelo órgão ambiental competente.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "04279210000111",
+      "entries": [
+        {
+          "num_tad": "656942",
+          "data": "2017-05-02 16:18:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Ficam embargadas as atividades potencialmente poluidoras de comércio e depósito de produtos perigosos até a regularização da empresa junto ao Cadastro Técnico Federal de atividades Potencialmente Poluidoras e Utilizadoras de Recursos Naturais (CTF/APP), em atendimento a notificação nº 20229/E, reiterada através da notificação nº 20237/E. Lei Federal 9605/98 art. 70 1°, art. 72 II,VII. Decreto Federal 6514/08 art. 3 II,VII, art. 80 c/c Lei nº 6938/1981.",
+          "tipo": "Atividade"
+        }
+      ]
+    },
+    {
+      "cnpj": "05261226000160",
+      "entries": [
+        {
+          "num_tad": "656940",
+          "data": "2017-03-17 14:48:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Ficam embargadas as atividades potencialmente poluidoras de comércio, depósito e transporte de produtos perigosos, até a obtenção e apresentação da Licença de Operação emitida pelo órgão ambiental competente, assim como a regularização da empresa junto ao Cadastro Técnico Federal de atividades Potencialmente Poluidoras e Utilizadoras de Recursos Naturais (CTF/APP).  Lei Federal 9605/98 art. 70 1°, art. 72 II,VII. Decreto Federal 6514/08 art. 3 II,VII, art. 66 c/c Resolução Conama 237/97.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "45581238000196",
+      "entries": [
+        {
+          "num_tad": "656939",
+          "data": "2017-03-09 16:42:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Ficam embargadas as atividades potencialmente poluidoras e utilizadoras de recursos naturais informadas no Cadastro Técnico Federal, categoria 3-10, 3-4 e 3-3, até a regularização da empresa no CTF, com a entrega dos relatórios de atividades pendentes. Exigência legal realizada através da notificação nº 20223/E. Lei Federal 9605/98 70 1° 72 II,VII, Decreto Federal 6514/08 3 II,VII 80 c/c Lei 6938/81.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "15241564000193",
+      "entries": [
+        {
+          "num_tad": "656936",
+          "data": "2016-11-16 14:12:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Ficam embargadas as atividades de comércio, depósito e reciclagem de baterias automotivas até a obtenção e apresentação da licença ambiental emitida pelo órgão ambiental competente e decisão de autoridade julgadora, por infringência ao art. 66 do Decreto 6.514/2008 c/c a Resolução Conama 237/97. Sanção prevista no inciso VII da Lei 9.605/98.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "22218677000133",
+      "entries": [
+        {
+          "num_tad": "687018",
+          "data": "2016-10-13 15:04:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Por infringir o art. 66 do Decreto 6.514/08, ficam embargadas as atividades de comércio e depósito de baterias automotivas novas e inservíveis e/ou sucatas até a apresentação da Licença Ambiental de Operação emitida pelo orgão competente e decisão da autoridade competente.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "11042722000125",
+      "entries": [
+        {
+          "num_tad": "656934",
+          "data": "2016-09-30 14:28:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Fica embargada a atividade de transporte de cargas perigosas até que a empresa realize a sua inscrição no CTF, conforme IN IBAMA 6/2013, Lei 6.938/81 e Lei Federal 9.605/98 art. 72 VII.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "21369373000104",
+      "entries": [
+        {
+          "num_tad": "686970",
+          "data": "2016-01-28 09:46:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Fica embargada a atividade de reforma de pneumáticos usados até a obtenção da licença de operação emitida pelo órgão ambiental competente, como medida acautelatória, conforme inciso VII do art. 72 do Decreto n° 6.514/2008.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "78106754000118",
+      "entries": [
+        {
+          "num_tad": "656852",
+          "data": "2015-03-24 17:31:00",
+          "area": "1,2779",
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Fica embargada a Área de 1,2766 hectares, para toda e qualquer atividade, objeto da extração mineral irregular, conforme vértices de coordenadas no croqui anexo ao relatório.",
+          "tipo": "Outros"
+        }
+      ]
+    },
+    {
+      "cnpj": "76206606000140",
+      "entries": [
+        {
+          "num_tad": "700684",
+          "data": "2015-02-25 08:19:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Fica embargada toda a atividade do empreendimento Zoológico Público - Zoológico Bosque Guarani no que se refere à entrada ou saída de espécimes e qualquer tipo de alienação, sendo também proibida a reprodução ou qualquer forma de uso dos animais, produtos ou subprodutos com o objetivo ou não de auferir lucro . Excetuam-se os procedimentos necessários para garantia de bem-estar dos espécimes sob a responsabilidade do empreendimento.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "76765148000189",
+      "entries": [
+        {
+          "num_tad": "489674",
+          "data": "2013-04-01 11:20:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Fica suspensa a aquisição e comercialização de partes, produtos e subprodutos da fauna silvestre nativa.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "80378979000175",
+      "entries": [
+        {
+          "num_tad": "493585",
+          "data": "2011-11-16 14:55:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA A CONTINUIDADE DA ATIVIDADE DE ATERRAMENTO NO LOCAL ACIMA. ATÉ A REGULARIZAÇÃO DAS PENDENCIAS NOS ORGÃOS AMBIENTAIS, INCLUSIVE CONSTRUÇÕES, DENTRO DO PERÍMETRO CONFORME CROQUI.",
+          "tipo": null
+        },
+        {
+          "num_tad": "493582",
+          "data": "2011-10-26 14:45:00",
+          "area": "1,0547",
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADO TEMPORARIAMENTE AS ATIVIDADE DE ATERRAMENTO NA PROPRIEDADE LOTE 4.362, IMOVEL ALVIM, COORDENADAS GEOGR. 25º31'10,6'' S - 54º31'18,6'' / 25º31'05,5'' S - 54º,31'14,0'' W, PARA CONSULTA TÉCNICA A FIM DE SANAR DUVIDAS.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "86806148000133",
+      "entries": [
+        {
+          "num_tad": "493604",
+          "data": "2010-09-21 11:45:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICAM EMBARGADAS AS ATIVIDADES DE COMÉRCIO,DEPÓSITO E RECEBIMENTO DE COMBUSTÍVEIS ATÉ DECISÃO ULTERIOR DA AUTORIDADE COMPETENTE,EXCETO A MANUTENÇÃO DE INSTALAÇÕES/EQUIPAMENTOS E A PREVENÇÃO,REDUÇÃO OU REMEDIAÇÃO DOS RISCOS E IMPACTOS AMBIENTAIS POTENCIALMENTE POLUIDORES ADVINDOS DO FUNCIONAMENTO DO POSTO DE COMBUSTÍVEIS.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "05795627000108",
+      "entries": [
+        {
+          "num_tad": "375099",
+          "data": "2010-03-30 17:41:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA/INTERDITADA A ATIVIDADE DE DEPÓSITO DE CARVÃO VEGETAL (PRODUTOS PERIGOSO), UTILIZADOR DE RECURSOS AMBIENTAIS.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "10277001000131",
+      "entries": [
+        {
+          "num_tad": "500976",
+          "data": "2010-03-30 17:40:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "EMBARGADA/INTERDITADA A ATIVIDADE DO DEPÓSITO DE CARVÃO VEGETAL (PRODUTO PERIGOSO), UTILIZADOR DE RECURSOS NATURAIS.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "05872945000117",
+      "entries": [
+        {
+          "num_tad": "492783",
+          "data": "2010-03-30 17:10:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA A ATIVIDADE DE DEPÓSITO DE CARVÃO.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "07373744000109",
+      "entries": [
+        {
+          "num_tad": "456587",
+          "data": "2010-03-30 09:20:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA/INTERDITADA A ATIVIDADE DE DEPÓSITO DE CARVÃO (PRODUTO PERIGOSO), UTILIZADOR DE RECURSO AMBIENTA.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "08809610000142",
+      "entries": [
+        {
+          "num_tad": "375098",
+          "data": "2010-03-29 16:17:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "EMBARGADA/INTERDITADA A ATIVIDADE DE DEPÓSITO DE CARVÃO VEGETAL (PRODUTO PERIGOSO), UTILIZADOR DE RECURSOS AMBIENTAIS.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "07734381000181",
+      "entries": [
+        {
+          "num_tad": "364587",
+          "data": "2010-03-26 15:10:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICAM EMBARGADAS AS ATIVIDADES DE DEPOSITO E COMERCIO DE PRODUTOS PERIGOSOS (DEPOSITO DE CARVÃO), ATÉ A REGULARIZAÇÃO DA LICENÇA DE OPERAÇÃO - LO, EVITANDO-SE A CONTINUIDADE DA INFRAÇÃO.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "09591600000146",
+      "entries": [
+        {
+          "num_tad": "565105",
+          "data": "2010-03-26 12:00:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA A ATIVIDADE DE EXPLORAÇÃO ECONÔMICA DE CARVÃO VEGETAL POR NÃO TER LICENÇA DE ÓRGÃO AMBIENTAL.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "03374534000176",
+      "entries": [
+        {
+          "num_tad": "564927",
+          "data": "2010-03-25 13:44:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA A ATIVIDADE DE DEPÓSITO E EMPACOTAMENTO DE CARVÃO VEGETAL, EVITANDO ASSIM A CONTINUIDADE DA INFRAÇÃO.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "77088474000161",
+      "entries": [
+        {
+          "num_tad": "363109",
+          "data": "2010-01-22 16:10:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADO O ESTABELECIMENTO DE COMERCIO DE COMBUSTIVEIS NO ENDEREÇO ACIMA IDENTIFICADO ATÉ A MANIFESTAÇÃO ULTERIORDA AUTORIDADE COMPETENTE.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "77771442000166",
+      "entries": [
+        {
+          "num_tad": "363106",
+          "data": "2010-01-18 09:05:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADO O ESTABELECIMENTO DE COMERCIO DE COMBUSTÍVEL ACIMA IDENTIFICADO ATÉ A MANIFESTAÇÃO ULTERIOR DA AUTORIDADE COMPETENTE.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "09369316000120",
+      "entries": [
+        {
+          "num_tad": "492831",
+          "data": "2009-04-23 09:15:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA DA ATIVIDADES INDUSTRIAIS DA EMPRESA ATÉ A REGULARIZAÇÃO DO OBJETO DA INFRAÇÃO E DEMAIS PENDENCIAS AMBIENTAIS.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "81465163000141",
+      "entries": [
+        {
+          "num_tad": "362889",
+          "data": "2007-10-25 08:30:00",
+          "area": "15,0173",
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "POR INFRINGIR OS ARTIGOS 70,45 DA LEOI 9.605/98 ARTIGOS  11,1(d)11.428/06, FICA EMBARGADA A RETIRADA DE ÁRVORES NATIVAS E QUALQUER OUTRAA ATIVIDADE EM UMA ÁREA EQUIVALENTE  A 150.000M²(CENTO E CINQUENTA MIL METROS QUADRADOS D E PROPRIEDADE DE HOTEL CANZI LTDA.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "75917955000107",
+      "entries": [
+        {
+          "num_tad": "362884",
+          "data": "2007-09-17 16:40:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "POR PROVOCAR INCÊNDIO EM ÁREA DE PRESERVAÇÃO PERMANENTE TOTALIZANDO 26.000 M², FICANDO EMBARGADA ATIVIDADE DE FOGO NA PROPRIEDADE MENCIONADA. COORDENADAS UTM 21J0747200 - 7168527.",
+          "tipo": null
+        },
+        {
+          "num_tad": "362885",
+          "data": "2007-09-17 09:45:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "POR INFRING~ENCIA AOS ARTIGOS 70 E 38 DA LEI 9605/98, ARTIGO 11, I, B, C DA LEI 11428/06, FICA EMBARGADA UMA ÁREA EQUIVALENTE A DESMATE DE 1.000 M², E 6.000 M² DE ÁREA DANIFICADA E TERRAPLANAGEM. COORDENADAS UTM 21J0747289 - 7168611.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "03785119000105",
+      "entries": [
+        {
+          "num_tad": "362886",
+          "data": "2007-09-17 13:45:00",
+          "area": "0,0308",
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "POR INFRINGÊNCIA DOS ARTIGOS 70 E 38 DA LEI 9605/98 E DOS ARTIGOS 11,I,''B'',''D'' DA LEI 11428/06, FICA EMBARGADA A ATIVIDADE DE ATERRAMENTO, TERRAPLENAGEM E SUPRESSÃO DE VEGETAÇÃO REALIZADA EM ÁREA DE PRESERVAÇÃO PERMANENTE CORRESPONDENTE A 7.000 M² SEM AUTORIZAÇÃO DE NENHUM ÓRGÃO AMBIENTAL COMPETENTE.",
+          "tipo": "Desmatamento"
+        }
+      ]
+    },
+    {
+      "cnpj": "33412792000594",
+      "entries": [
+        {
+          "num_tad": "172741",
+          "data": "2005-06-02 11:00:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "POR INFRIGENCIA AO ARTIGO 38 DA LEI 9605/98 FICA EMBARGADA A ÁREA CORRESPONDENTE A CABECEIRA DE NASCENTE, NO INTERIOR DO ATERRO SANITÁRIO DO MUNICIPIO DE FOZ DO IGUAÇU/PR, ÁREA CORRESPONDENTE AO ARTIGO 2º PARÁGRAFO ''C'' DA LEI 4771/65.COORD.GEOG. S 25º27'41,8'' - W 54º36'35,4''",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "04135220000183",
+      "entries": [
+        {
+          "num_tad": "364703",
+          "data": "2004-06-23 16:14:00",
+          "area": "0,0308",
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICAM APREENDIDOS 15.000 KG DE CARVÃO VEGETAL, ORIUNDOS DO PARAGUAI. FICA EMBARGADA A ATIVIDADE DESENVOLVIDA PELA EMPRESA ATÉ A REGULARIZAÇÃO DA LICENÇA DE OPERAÇÃO.",
+          "tipo": "Atividade"
+        }
+      ]
+    },
+    {
+      "cnpj": "79446787000170",
+      "entries": [
+        {
+          "num_tad": "35688",
+          "data": "2001-07-25 15:00:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "Ficam embargadas as obras e a instalação de equipamentos referentes ao Porto Fluvial localizado às margens do Rio Iguaçu.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "80359003000155",
+      "entries": [
+        {
+          "num_tad": "35882",
+          "data": "2000-02-23 10:45:00",
+          "area": null,
+          "municipio": "Foz do Iguaçu",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA A ATIVIDADE DE LAVAGEM DO POSTO GASPARIN I ATÉ A SUA RECUPERAÇÃO DOS DANOS AMBIENTAIS AO CORRÉGO ABAIXO DO POSTO AS MARGENS DA BR-277 KM 723,5.",
+          "tipo": null
+        }
+      ]
+    }
+  ],
+  "PALOTINA": [
+    {
+      "cnpj": "07250923000140",
+      "entries": [
+        {
+          "num_tad": "15125",
+          "data": "2018-06-22 10:43:00",
+          "area": null,
+          "municipio": "Palotina",
+          "uf": "PR",
+          "descricao": "Decreto Federal 6514/2008, art, 66. Fica embargada a atividade de comercilização e desdobramento de madeiras até a apresentação da Licença de Operação expedida pelo órgão ambiental competente, tendo em vista a não apresentação durante o ato fiscalizarório.",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "02737928000421",
+      "entries": [
+        {
+          "num_tad": "565455",
+          "data": "2010-12-09 15:00:00",
+          "area": null,
+          "municipio": "Palotina",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA A ATIVIDADE DE DEPOSITO DE AREIA.",
+          "tipo": null
+        },
+        {
+          "num_tad": "565454",
+          "data": "2010-12-09 14:20:00",
+          "area": null,
+          "municipio": "Icaraíma",
+          "uf": "PR",
+          "descricao": "FICA EMBARGADA A ATIVIDADE DE EXTRAÇÃO DE AREIA NO RIO PARANÁ E IRAÍ.  OBSERVAÇÃO: ENVIADO POR AVISO DE RECEBIMENTO (AR).",
+          "tipo": null
+        }
+      ]
+    },
+    {
+      "cnpj": "77856219000111",
+      "entries": [
+        {
+          "num_tad": "492807",
+          "data": "2008-02-19 10:00:00",
+          "area": null,
+          "municipio": "Palotina",
+          "uf": "PR",
+          "descricao": "FICAM EMBARGADAS AS ATIVIDADES DA EMPRESA, ATÉ A REGULARIZAÇÃO DA LICAENÇA DE OPERAÇÃO JUNTO AO IAP E DEMAIS PENDENCIAS ADMINISTRATIVAS JUNTO AO IBAMA",
+          "tipo": null
+        }
+      ]
+    }
+  ]
+}

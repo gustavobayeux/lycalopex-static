@@ -77,15 +77,27 @@
         </button>
       </div>
       <div style="align-self:flex-end;padding-bottom:0.25rem">
-        <p class="input-label" style="margin-bottom:0.35rem">Filtrar por cidade</p>
-        <input
-          id="filter-city"
-          type="text"
-          class="filter-input"
-          placeholder="Ex: Sorriso, Rondonópolis..."
-          aria-label="Filtrar por cidade"
-          autocomplete="off"
-        />
+        <p class="input-label" style="margin-bottom:0.35rem">Buscar por Cidade (PR)</p>
+        <div class="city-search-box">
+          <input
+            id="city-search-input"
+            type="text"
+            class="filter-input"
+            placeholder="Assis Chateaubriand, Toledo..."
+            aria-label="Buscar por cidade"
+            list="city-datalist"
+          />
+          <datalist id="city-datalist">
+            <option value="Assis Chateaubriand">
+            <option value="Toledo">
+            <option value="Cascavel">
+            <option value="Palotina">
+            <option value="Foz do Iguaçu">
+          </datalist>
+          <button id="btn-outlaw-search" class="btn btn-risk btn-small" title="Buscar infratores nesta cidade">
+            🕵️ Modo Infrator
+          </button>
+        </div>
       </div>
     </div>
   </section>
@@ -111,6 +123,14 @@
       <option value="found">Alertas de Risco</option>
       <option value="clean">Fichas Limpas</option>
     </select>
+
+    <div class="filter-sep" aria-hidden="true"></div>
+    
+    <label class="toggle-switch">
+      <input type="checkbox" id="toggle-outlaw-only">
+      <span class="toggle-slider"></span>
+      <span class="toggle-label">Apenas Infratores</span>
+    </label>
 
     <div class="filter-sep" aria-hidden="true"></div>
 
