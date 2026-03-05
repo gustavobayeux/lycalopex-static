@@ -76,33 +76,48 @@ async function initializeUI() {
 }
 
 function attachEventListeners() {
-  // Region selection
+  // Region / state / city selection (event delegation on document)
   document.addEventListener('click', (e) => {
-    if (e.target.closest('.region-btn')) {
-      const region = e.target.closest('.region-btn').dataset.region;
-      selectRegion(region);
+    const regionBtn = e.target.closest && e.target.closest('.region-btn');
+    if (regionBtn) {
+      const region = regionBtn.dataset.region;
+      if (region) selectRegion(region);
+      return;
     }
-    if (e.target.closest('.state-btn')) {
-      const state = e.target.closest('.state-btn').dataset.state;
-      selectState(state);
+
+    const stateBtn = e.target.closest && e.target.closest('.state-btn');
+    if (stateBtn) {
+      const state = stateBtn.dataset.state;
+      if (state) selectState(state);
+      return;
     }
-    if (e.target.closest('.city-btn')) {
-      const city = e.target.closest('.city-btn').dataset.city;
-      const state = e.target.closest('.city-btn').dataset.state;
-      selectCity(city, state);
+
+    const cityBtn = e.target.closest && e.target.closest('.city-btn');
+    if (cityBtn) {
+      const city = cityBtn.dataset.city;
+      const state = cityBtn.dataset.state;
+      if (city && state) selectCity(city, state);
     }
   });
 
-  // Filter and sort
-  filterType.addEventListener('change', applyFiltersAndSort);
-  filterEsg.addEventListener('change', applyFiltersAndSort);
-  sortField.addEventListener('change', applyFiltersAndSort);
+  // Filter and sort (defensive: only attach if elements exist)
+  if (filterType) {
+    filterType.addEventListener('change', applyFiltersAndSort);
+  }
+  if (filterEsg) {
+    filterEsg.addEventListener('change', applyFiltersAndSort);
+  }
+  if (sortField) {
+    sortField.addEventListener('change', applyFiltersAndSort);
+  }
 
   // Export
-  exportBtn.addEventListener('click', () => {
-    exportCSV();
-    showToast('CSV exportado com sucesso!');
-  });
+  if (exportBtn) {
+    exportBtn.addEventListener('click', () => {
+      exportCSV();
+      showToast('CSV exportado com sucesso!');
+    });
+  }
 }
 
 // ── Region Selection ──────────────────────────────────────────────────────────
