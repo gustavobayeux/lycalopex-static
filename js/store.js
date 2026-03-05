@@ -351,6 +351,13 @@ export function applyFilters() {
   state.filtered = result;
 }
 
+// Backwards-compatibility shim for older modules that still import filterAndSort
+// Newer map-based UI uses its own applyFiltersAndSort implementation.
+export function filterAndSort() {
+  applyFilters();
+  notify();
+}
+
 function updateAvailableFilters() {
   state.availableCities = [...new Set(state.records.map(r => r.municipio).filter(Boolean))].sort();
   state.availableTypes  = [...new Set(state.records.map(r => r.cnaeType).filter(Boolean))].sort();
