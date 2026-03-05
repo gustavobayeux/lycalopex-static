@@ -1,12 +1,15 @@
 /**
- * store.js — Application state management for Lycalopex
+ * store.js — Application state management for Lycalopex v3 (On-Demand)
  *
  * Manages:
- *   - Loaded company records
+ *   - Loaded company records (on-demand search)
  *   - Filter state (city, type, score range, anti-corruption)
  *   - Sort order (default: highest vulnerability first)
  *   - Loading/error states
  *   - SessionStorage cache (1h TTL)
+ *
+ * NEW: On-demand search by city via Brasil.IO + real-time risk analysis
+ * NO dependency on pre-cached IBAMA data
  */
 
 'use strict';
@@ -17,10 +20,12 @@ import { calcResistanceScore, calcVulnerabilityScore, calcEnvScore, getCNAEProfi
 import { calcUrbanExploringScore } from './urban-exploring.js';
 import { analyzeSecurityGaps } from './gap-analysis.js';
 import { runProcurementIntelligence } from './comprasnet.js';
+import { searchCompaniesByCity, analyzeLocalRisk, detectGrilhagePattern } from './city-search-ondemand.js';
+import { runAlternativeRiskAnalysis } from './risk-analysis-alternative.js';
 
 // ── Cache helpers ─────────────────────────────────────────────────────────────
 
-const CACHE_PREFIX = 'lycalopex_v2_';
+const CACHE_PREFIX = 'lycalopex_v3_';
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 function cacheGet(key) {
@@ -49,524 +54,323 @@ export const state = {
   records: [],
   /** @type {CompanyRecord[]} */
   filtered: [],
+
+  // Filters
   filters: {
     city: '',
-    type: '',
-    minScore: 0,
-    maxScore: 100,
-    antiCorruption: '',
-    outlawOnly: false,
+    type: 'all', // 'all', 'high', 'medium', 'low'
+    scoreMin: 0,
+    scoreMax: 100,
+    antiCorruptionOnly: false,
   },
-  sort: {
-    field: 'vulnerability',
-    dir: 'desc',
-  },
+
+  // Sort
+  sort: 'vulnerabilityDesc', // 'vulnerabilityDesc', 'nameAsc', 'scoreDesc'
+
+  // State
   loading: false,
   loadingMessage: '',
   error: null,
-  availableCities: [],
-  availableTypes: [],
-  totalLoaded: 0,
+  lastSearchCity: '',
+
+  // Pagination
+  pageSize: 10,
+  currentPage: 1,
 };
 
-// ── Pub/sub ───────────────────────────────────────────────────────────────────
+// ── Observers ─────────────────────────────────────────────────────────────────
 
-const listeners = new Set();
+const observers = [];
 
-export function subscribe(fn) {
-  listeners.add(fn);
-  return () => listeners.delete(fn);
-}
-
-export function notify() {
-  listeners.forEach(fn => fn(state));
-}
-
-// ── Data loading ──────────────────────────────────────────────────────────────
-
-/**
- * Load company data from a list of CNPJs.
- * Processes sequentially to respect API rate limits.
- * @param {string[]} cnpjList
- */
-export async function loadCNPJs(cnpjList) {
-  state.loading = true;
-  state.error = null;
-  state.records = [];
-  state.totalLoaded = 0;
-  state.loadingMessage = 'Iniciando consulta...';
-  notify();
-
-  const unique = [...new Set(cnpjList.map(c => c.replace(/\D/g, '')).filter(c => c.length === 14))];
-
-  const tasks = unique.map((cnpj, i) => async () => {
-    state.loadingMessage = `Consultando CNPJ ${i + 1}/${unique.length}: ${fmtCNPJ(cnpj)}`;
-    notify();
-
-    const cached = cacheGet(`cnpj_${cnpj}`);
-    if (cached) {
-      state.records.push(cached);
-      state.totalLoaded = state.records.length;
-      updateAvailableFilters();
-      applyFilters();
-      notify();
-      return cached;
-    }
-
-    const raw = await fetchCNPJ(cnpj);
-    if (!raw) {
-      console.warn(`[Lycalopex] Failed to fetch CNPJ: ${cnpj}`);
-      return null;
-    }
-
-    const record = await buildRecord(raw, cnpj);
-    cacheSet(`cnpj_${cnpj}`, record);
-    state.records.push(record);
-    state.totalLoaded = state.records.length;
-    updateAvailableFilters();
-    applyFilters();
-    notify();
-    return record;
-  });
-
-  // 800ms between requests to be polite to public APIs
-  await sequentialQueue(tasks, 800);
-
-  state.loading = false;
-  state.loadingMessage = '';
-  updateAvailableFilters();
-  applyFilters();
-  notify();
-}
-
-/**
- * Build a full CompanyRecord from normalized API data.
- * @param {object} raw - Normalized company data from api.js
- * @param {string} cnpj - Clean 14-digit CNPJ
- * @returns {Promise<CompanyRecord>}
- */
-async function buildRecord(raw, cnpj) {
-  const profile = getCNAEProfile(raw);
-  const { score: resistance, breakdown, justification } = calcResistanceScore(raw);
-  const { score: vulnerability, label: vulnLabel } = calcVulnerabilityScore(raw);
-  const { score: envScore, label: envLabel, indicators: envIndicators } = calcEnvScore(raw);
-
-  // Extract partners from the API response (already embedded in cnpj.ws)
-  const sociosRaw = extractSocios(raw);
-  const socios = sociosRaw.map(s => ({
-    nome: s.nome,
-    cpfMasked: maskCPF(s.cpfCnpj),
-    cpfHash: hashCPF(s.cpfCnpj),
-    qualificacao: s.qualificacao,
-    dataEntrada: s.dataEntrada,
-    tipo: s.tipo,
-  }));
-
-  // Anti-corruption check (CEIS)
-  const acResult = await checkSancoesCNPJ(cnpj);
-
-  // Urban exploring susceptibility
-  const ueResult = await calcUrbanExploringScore(raw);
-
-  // IBAMA environmental embargoes check
-  const ibamaResult = await checkIbamaEmbargos(cnpj);
-
-  // Extended shareholder data from Brasil.IO (supplements cnpj.ws QSA)
-  const sociosBrasilIO = await fetchSociosBrasilIO(cnpj);
-  // Merge: prefer cnpj.ws data but fill gaps from Brasil.IO
-  const sociosMerged = socios.length > 0 ? socios.map((s, i) => ({
-    ...s,
-    pais: sociosBrasilIO[i]?.pais || 'Brasil',
-    nomePaisOrigem: sociosBrasilIO[i]?.nomePaisOrigem || '',
-    codigoQualificacao: sociosBrasilIO[i]?.codigoQualificacao || '',
-  })) : sociosBrasilIO.map(s => ({
-    nome: s.nome,
-    cpfMasked: maskCPF(s.cpfCnpj),
-    cpfHash: hashCPF(s.cpfCnpj),
-    qualificacao: s.qualificacao,
-    dataEntrada: formatDate(s.dataEntrada),
-    tipo: s.tipo,
-    pais: s.pais,
-    nomePaisOrigem: s.nomePaisOrigem,
-  }));
-
-  const partialRecord = {
-    cnpj: fmtCNPJ(cnpj),
-    razaoSocial: raw.nome || '—',
-    nomeFantasia: raw.fantasia || '',
-    situacao: raw.situacao || '—',
-    abertura: raw.abertura || '—',
-    porte: raw.porte || '—',
-    capitalSocial: raw.capital_social || '0',
-    logradouro: raw.logradouro || '',
-    numero: raw.numero || '',
-    complemento: raw.complemento || '',
-    bairro: raw.bairro || '',
-    municipio: raw.municipio || '',
-    uf: raw.uf || '',
-    cep: raw.cep || '',
-    email: raw.email || '',
-    telefone: raw.telefone || '',
-    cnaeLabel: profile.label,
-    cnaeType: profile.type,
-    socios: sociosMerged.length > 0 ? sociosMerged : socios,
-    sociosBrasilIO: sociosBrasilIO.length,
-    resistanceScore: resistance,
-    resistanceBreakdown: breakdown,
-    resistanceJustification: justification,
-    vulnerabilityScore: vulnerability,
-    vulnerabilityLabel: vulnLabel,
-    envScore,
-    envLabel,
-    envIndicators,
-    antiCorruptionStatus: acResult.status,
-    antiCorruptionDetail: acResult.detail,
-    ibamaStatus: ibamaResult.status,
-    ibamaDetail: ibamaResult.detail,
-    ibamaEntries: ibamaResult.entries,
-    urbanExploringScore: ueResult.score,
-    urbanExploringLabel: ueResult.label,
-    urbanExploringBreakdown: ueResult.breakdown,
-    urbanExploringIndicators: ueResult.indicators,
-    lastUpdated: new Date().toLocaleDateString('pt-BR'),
-  };
-
-  // Security gap analysis
-  const securityGaps = analyzeSecurityGaps(partialRecord);
-
-  // ESG Intelligence: PEP detection, shareholder graph, ESG Risk Index, field action plan
-  // Uses the merged socios list for PEP checking
-  const apiKey = window.__LYCALOPEX_API_KEY__ || '';
-  const esgIntelligence = await runESGIntelligence(
-    { ...partialRecord, securityGaps },
-    (sociosMerged.length > 0 ? sociosMerged : socios),
-    apiKey
-  );
-
-  // Government procurement intelligence (COMPRASNET + Portal da Transparência)
-  const procurementIntelligence = await runProcurementIntelligence(
-    partialRecord,
-    esgIntelligence.shareholderAnalysis?.pepCount || 0,
-    apiKey
-  );
-
-  return {
-    ...partialRecord,
-    securityGaps,
-    // ESG Intelligence fields
-    cnepStatus: esgIntelligence.cnepResult.status,
-    cnepDetail: esgIntelligence.cnepResult.detail,
-    cnepEntries: esgIntelligence.cnepResult.entries,
-    leniencyStatus: esgIntelligence.leniencyResult.status,
-    leniencyDetail: esgIntelligence.leniencyResult.detail,
-    shareholderAnalysis: esgIntelligence.shareholderAnalysis,
-    esgScore: esgIntelligence.esgIndex.score,
-    esgLabel: esgIntelligence.esgIndex.label,
-    esgFieldPriority: esgIntelligence.esgIndex.fieldPriority,
-    esgComponents: esgIntelligence.esgIndex.components,
-    esgActionItems: esgIntelligence.esgIndex.actionItems,
-    fieldActionPlan: esgIntelligence.fieldActionPlan,
-    // Procurement Intelligence fields
-    procurementRiskScore: procurementIntelligence.procurementRiskScore,
-    procurementRiskLabel: procurementIntelligence.procurementRiskLabel,
-    procurementRiskFactors: procurementIntelligence.riskFactors,
-    procurementContractsFound: procurementIntelligence.contractsFound,
-    contractCount: procurementIntelligence.contractCount,
-    contractTotalValue: procurementIntelligence.contractTotalValue,
-    procurementSpendingFound: procurementIntelligence.spendingFound,
-    spendingCount: procurementIntelligence.spendingCount,
-    spendingTotalValue: procurementIntelligence.spendingTotalValue,
-    procurementContractsDetail: procurementIntelligence.contractsDetail,
-    procurementSpendingDetail: procurementIntelligence.spendingDetail,
-    procurementActionItems: procurementIntelligence.actionItems,
-    procurementSummary: procurementIntelligence.summary,
+export function subscribe(callback) {
+  observers.push(callback);
+  return () => {
+    const idx = observers.indexOf(callback);
+    if (idx >= 0) observers.splice(idx, 1);
   };
 }
 
-// ── Filters & sort ────────────────────────────────────────────────────────────
-
-export function setFilter(key, value) {
-  state.filters[key] = value;
-  applyFilters();
-  notify();
+function notify() {
+  observers.forEach(cb => cb(state));
 }
 
-export function setSort(field, dir) {
-  state.sort = { field, dir };
-  applyFilters();
-  notify();
-}
-
-export function applyFilters() {
-  let result = [...state.records];
-
-  if (state.filters.city) {
-    const q = normalize(state.filters.city);
-    result = result.filter(r =>
-      normalize(r.municipio).includes(q) || normalize(r.uf).includes(q)
-    );
-  }
-
-  if (state.filters.type) {
-    result = result.filter(r => r.cnaeType === state.filters.type);
-  }
-
-  result = result.filter(r =>
-    r.vulnerabilityScore >= state.filters.minScore &&
-    r.vulnerabilityScore <= state.filters.maxScore
-  );
-
-  if (state.filters.antiCorruption) {
-    result = result.filter(r => {
-      if (state.filters.antiCorruption === 'found') return r.antiCorruptionStatus === 'Alerta';
-      if (state.filters.antiCorruption === 'clean') return r.antiCorruptionStatus === 'Verificado';
-      return true;
-    });
-  }
-
-  if (state.filters.outlawOnly) {
-    result = result.filter(r => r.ibamaStatus === 'Alerta Ambiental' || r.antiCorruptionStatus === 'Alerta');
-  }
-
-  // Sort
-  result.sort((a, b) => {
-    let av, bv;
-    switch (state.sort.field) {
-      case 'vulnerability': av = a.vulnerabilityScore; bv = b.vulnerabilityScore; break;
-      case 'resistance':    av = a.resistanceScore;    bv = b.resistanceScore;    break;
-      case 'env':           av = a.envScore;           bv = b.envScore;           break;
-      case 'esg':           av = a.esgScore || 0;      bv = b.esgScore || 0;      break;
-      case 'razaoSocial':   av = a.razaoSocial;        bv = b.razaoSocial;        break;
-      case 'municipio':     av = a.municipio;          bv = b.municipio;          break;
-      default:              av = a.vulnerabilityScore; bv = b.vulnerabilityScore;
-    }
-    if (typeof av === 'string') {
-      return state.sort.dir === 'asc'
-        ? av.localeCompare(bv, 'pt-BR')
-        : bv.localeCompare(av, 'pt-BR');
-    }
-    return state.sort.dir === 'asc' ? av - bv : bv - av;
-  });
-
-  state.filtered = result;
-}
-
-// Backwards-compatibility shim for older modules that still import filterAndSort
-// Newer map-based UI uses its own applyFiltersAndSort implementation.
-export function filterAndSort() {
-  applyFilters();
-  notify();
-}
-
-function updateAvailableFilters() {
-  state.availableCities = [...new Set(state.records.map(r => r.municipio).filter(Boolean))].sort();
-  state.availableTypes  = [...new Set(state.records.map(r => r.cnaeType).filter(Boolean))].sort();
-}
-
-// ── CSV export ────────────────────────────────────────────────────────────────
-
-export function exportCSV() {
-  const headers = [
-    'CNPJ', 'Razão Social', 'Nome Fantasia', 'Situação', 'Abertura', 'Porte',
-    'Capital Social', 'Logradouro', 'Número', 'Bairro', 'Município', 'UF', 'CEP',
-    'Atividade Principal (CNAE)', 'Tipo de Estrutura',
-    'Score Resistência Física', 'Score Vulnerabilidade Incêndio', 'Nível Vulnerabilidade',
-    'Score Risco Ambiental', 'Nível Risco Ambiental',
-    'Status Anti-Corrupção (CEIS)', 'Detalhe Anti-Corrupção',
-    'Status CNEP', 'Detalhe CNEP',
-    'Acordo de Leniência',
-    'Status IBAMA', 'Qtd Embargos IBAMA',
-    'ESG Risk Index', 'Nível ESG', 'Prioridade de Campo',
-    'ESG — Componente Ambiental', 'ESG — Componente Social/Gov', 'ESG — Poder Corporativo',
-    'PEPs no Quadro Societário', 'Concentração Societária', 'Influência Societária',
-    'Plano de Ação — Ações Imediatas', 'Plano de Ação — Documentos a Solicitar',
-    'Plano de Ação — Autoridades a Notificar', 'Plano de Ação — Referências Legais',
-    'Risco de Procurement (0-100)', 'Nível de Risco de Procurement',
-    'Contratos Federais — Quantidade', 'Contratos Federais — Valor Total',
-    'Despesas Federais — Quantidade', 'Despesas Federais — Valor Total',
-    'Resumo de Procurement', 'Fatores de Risco de Procurement',
-    'Gaps de Segurança',
-    'Sócios (mascarados)', 'Justificativa Técnica', 'Última Atualização'
-  ];
-
-  const rows = state.filtered.map(r => [
-    r.cnpj, r.razaoSocial, r.nomeFantasia, r.situacao, r.abertura, r.porte,
-    r.capitalSocial, r.logradouro, r.numero, r.bairro, r.municipio, r.uf, r.cep,
-    r.cnaeLabel, r.cnaeType,
-    r.resistanceScore, r.vulnerabilityScore, r.vulnerabilityLabel,
-    r.envScore, r.envLabel,
-    r.antiCorruptionStatus, r.antiCorruptionDetail,
-    r.cnepStatus || 'Pendente', r.cnepDetail || '',
-    r.leniencyStatus || 'Pendente',
-    r.ibamaStatus, (r.ibamaEntries || []).length,
-    r.esgScore || 0, r.esgLabel || '—', r.esgFieldPriority || '—',
-    r.esgComponents?.environmental || 0,
-    r.esgComponents?.socialGovernance || 0,
-    r.esgComponents?.corporatePower || 0,
-    r.shareholderAnalysis?.pepCount || 0,
-    r.shareholderAnalysis?.concentrationScore || 0,
-    r.shareholderAnalysis?.influenceScore || 0,
-    r.procurementRiskScore || 0,
-    r.procurementRiskLabel || '—',
-    r.contractCount || 0,
-    r.contractTotalValue || 0,
-    r.spendingCount || 0,
-    r.spendingTotalValue || 0,
-    r.procurementSummary || '',
-    (r.procurementRiskFactors || []).join(' | '),
-    (r.fieldActionPlan?.immediateActions || []).join(' | '),
-    (r.fieldActionPlan?.documentsToRequest || []).join(' | '),
-    (r.fieldActionPlan?.authoritiesToNotify || []).join(' | '),
-    (r.fieldActionPlan?.legalReferences || []).join(' | '),
-    (r.securityGaps || []).map(g => `${g.title}: ${g.description}`).join(' | '),
-    (r.socios || []).map(s => `${s.nome} (${s.cpfMasked})`).join(' | '),
-    r.resistanceJustification,
-    r.lastUpdated,
-  ]);
-
-  const csv = [headers, ...rows]
-    .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-    .join('\n');
-
-  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `lycalopex_${new Date().toISOString().slice(0, 10)}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-// ── Live Outlaw Search ──────────────────────────────────────────────────────────
+// ── On-Demand City Search ─────────────────────────────────────────────────────
 
 /**
- * Normalize a string for fuzzy comparison:
- * lowercase, remove accents, collapse spaces.
- * @param {string} str
- * @returns {string}
- */
-function normalizeCity(str) {
-  return (str || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
- * Find the best matching city key(s) in the regional data using fuzzy/partial matching.
- * Returns an array of matched keys (uppercase), sorted by match quality.
- * @param {string} query
- * @param {string[]} availableKeys
- * @returns {string[]}
- */
-function findMatchingCities(query, availableKeys) {
-  const q = normalizeCity(query);
-  if (!q) return [];
-
-  const exact = [];
-  const startsWith = [];
-  const contains = [];
-
-  for (const key of availableKeys) {
-    const norm = normalizeCity(key);
-    if (norm === q) {
-      exact.push(key);
-    } else if (norm.startsWith(q) || q.startsWith(norm)) {
-      startsWith.push(key);
-    } else if (norm.includes(q) || q.includes(norm)) {
-      contains.push(key);
-    }
-  }
-
-  return [...exact, ...startsWith, ...contains];
-}
-
-/**
- * Search for 'outlaws' (companies with IBAMA embargoes) in a specific city.
- * Uses fuzzy/partial matching against the regional environmental index.
- * Falls back to nearby/similar city names when no exact match is found.
+ * Search for companies in a city on-demand
+ * Works for ANY city in Brazil, not just pre-cached data
  */
 export async function searchOutlawsByCity(cityName) {
   state.loading = true;
   state.error = null;
-  state.loadingMessage = `Buscando infratores em ${cityName}...`;
+  state.loadingMessage = `Buscando empresas em ${cityName}...`;
   state.records = [];
+  state.filtered = [];
+  state.lastSearchCity = cityName;
+  state.currentPage = 1;
   notify();
 
   try {
-    const response = await fetch('data/ibama-regional.json');
-    if (!response.ok) throw new Error('Falha ao carregar base regional');
+    // Parse city and state from input (e.g., "São Paulo, SP" or just "São Paulo")
+    const parts = cityName.split(',').map(p => p.trim());
+    const city = parts[0];
+    let uf = parts[1]?.toUpperCase() || '';
 
-    const regionalData = await response.json();
-    const availableKeys = Object.keys(regionalData);
+    // If no UF provided, try to infer from city name
+    if (!uf) {
+      const cityToUF = {
+        'são paulo': 'SP',
+        'rio de janeiro': 'RJ',
+        'belo horizonte': 'MG',
+        'brasília': 'DF',
+        'curitiba': 'PR',
+        'porto alegre': 'RS',
+        'salvador': 'BA',
+        'fortaleza': 'CE',
+        'manaus': 'AM',
+        'belém': 'PA',
+        'assis chateaubriand': 'PR',
+        'cascavel': 'PR',
+        'toledo': 'PR',
+        'foz do iguaçu': 'PR',
+      };
+      const normalized = (city || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      uf = cityToUF[normalized] || 'SP'; // Default to SP
+    }
 
-    // Fuzzy match: exact > starts-with > contains
-    const matchedKeys = findMatchingCities(cityName, availableKeys);
+    state.loadingMessage = `Consultando Brasil.IO para ${city}/${uf}...`;
+    notify();
 
-    if (matchedKeys.length === 0) {
+    // Search for companies on-demand
+    const cnpjs = await searchCompaniesByCity(city, uf);
+
+    if (cnpjs.length === 0) {
       state.loading = false;
-      state.error = `Nenhum registro de infração ambiental encontrado para "${cityName}" na base do IBAMA (${availableKeys.length} municípios cobertos). Tente um município vizinho.`;
+      state.error = `Nenhuma empresa encontrada para "${city}/${uf}". Verifique o nome do município.`;
       notify();
       return;
     }
 
-    // Collect all companies from matched cities (up to 15 total)
-    const allCompanies = [];
-    const matchedNames = [];
-    for (const key of matchedKeys) {
-      const companies = regionalData[key] || [];
-      matchedNames.push(key);
-      for (const c of companies) {
-        if (allCompanies.length < 15) allCompanies.push(c);
-      }
-    }
-
-    state.loadingMessage = `Encontrado(s): ${matchedNames.join(', ')} — ${allCompanies.length} empresa(s) com embargo IBAMA`;
+    state.loadingMessage = `Encontradas ${cnpjs.length} empresa(s) em ${city}/${uf}. Analisando risco...`;
     notify();
 
-    const cnpjs = allCompanies.map(c => c.cnpj);
-    await loadCNPJs(cnpjs);
+    // Load and analyze companies
+    await loadCNPJs(cnpjs, city, uf);
 
   } catch (e) {
-    state.error = 'Erro ao carregar base regional IBAMA.';
-    console.error(e);
+    state.error = `Erro ao buscar empresas: ${e.message}`;
+    console.error('[Store] City search error:', e);
   }
 
   state.loading = false;
   notify();
 }
 
-// CNPJs reais com embargos IBAMA no PR (Cascavel, Toledo, Foz do Iguaçu, Curitiba, Guarapuava)
-export const DEMO_CNPJS = [
-  '42801774000161', // Cascavel
-  '03387382000146', // Cascavel
-  '77602613000123', // Toledo
-  '02102907000197', // Toledo
-  '05210229000174', // Foz do Iguaçu
-  '16630764000109', // Foz do Iguaçu
-  '27203064000146', // Curitiba
-  '29302631000147', // Curitiba
-  '04678885000133', // Guarapuava
-  '00567480000177', // Guarapuava
-];
+// ── Load and Analyze CNPJs ────────────────────────────────────────────────────
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+/**
+ * Load CNPJ data and run full analysis pipeline
+ */
+async function loadCNPJs(cnpjs, city = '', uf = '') {
+  const results = [];
+  const total = cnpjs.length;
 
-function fmtCNPJ(cnpj) {
-  const c = cnpj.replace(/\D/g, '');
+  for (let i = 0; i < cnpjs.length; i++) {
+    const cnpj = cnpjs[i];
+    state.loadingMessage = `Analisando empresa ${i + 1}/${total}...`;
+    notify();
+
+    try {
+      const record = await analyzeCompany(cnpj, city, uf);
+      if (record) results.push(record);
+    } catch (e) {
+      console.warn(`[Store] Error analyzing ${cnpj}:`, e.message);
+    }
+
+    // Rate limiting
+    await new Promise(r => setTimeout(r, 100));
+  }
+
+  state.records = results;
+  applyFilters();
+  state.loading = false;
+  state.loadingMessage = '';
+  notify();
+}
+
+/**
+ * Analyze a single company
+ */
+async function analyzeCompany(cnpj, city = '', uf = '') {
+  try {
+    // Fetch basic company data
+    const companyData = await fetchCNPJ(cnpj);
+    if (!companyData) return null;
+
+    // Extract socios
+    const socios = await extractSocios(cnpj, companyData);
+
+    // Partial record
+    const partialRecord = {
+      cnpj,
+      razaoSocial: companyData.razao_social || '',
+      nomeFantasia: companyData.nome_fantasia || '',
+      municipio: city || companyData.municipio || '',
+      uf: uf || companyData.uf || '',
+      cnae: companyData.cnae || '',
+      cnaeLabel: companyData.cnae_label || '',
+      situacao: companyData.situacao || '',
+      abertura: companyData.abertura || '',
+      porte: companyData.porte || '',
+      capitalSocial: companyData.capital_social || '',
+      socios: socios || [],
+      logradouro: companyData.logradouro || '',
+      numero: companyData.numero || '',
+      bairro: companyData.bairro || '',
+      telefone: companyData.telefone || '',
+      email: companyData.email || '',
+    };
+
+    // Run analysis pipeline
+    const [
+      esgIntelligence,
+      procurementIntelligence,
+      alternativeRiskAnalysis,
+      localRisk,
+    ] = await Promise.all([
+      runESGIntelligence(partialRecord),
+      runProcurementIntelligence(partialRecord, 0),
+      runAlternativeRiskAnalysis(partialRecord, city, uf),
+      analyzeLocalRisk(partialRecord, city, uf),
+    ]);
+
+    // Scoring
+    const resistanceScore = calcResistanceScore(partialRecord);
+    const vulnerabilityScore = calcVulnerabilityScore(partialRecord);
+    const envScore = calcEnvScore(partialRecord);
+    const urbanExploringScore = calcUrbanExploringScore(partialRecord);
+    const securityGaps = analyzeSecurityGaps(partialRecord);
+
+    // Composite score
+    const compositeScore = Math.round(
+      (vulnerabilityScore * 0.35) +
+      (envScore * 0.25) +
+      (alternativeRiskAnalysis.totalRiskScore * 0.25) +
+      (localRisk.riskScore * 0.15)
+    );
+
+    return {
+      ...partialRecord,
+      resistanceScore,
+      vulnerabilityScore,
+      envScore,
+      urbanExploringScore,
+      compositeScore,
+      securityGaps,
+      // ESG Intelligence
+      cnepStatus: esgIntelligence.cnepResult.status,
+      cnepDetail: esgIntelligence.cnepResult.detail,
+      shareholderAnalysis: esgIntelligence.shareholderAnalysis,
+      esgScore: esgIntelligence.esgIndex.score,
+      esgLabel: esgIntelligence.esgIndex.label,
+      fieldActionPlan: esgIntelligence.fieldActionPlan,
+      // Procurement Intelligence
+      procurementRiskScore: procurementIntelligence.procurementRiskScore,
+      procurementRiskLabel: procurementIntelligence.procurementRiskLabel,
+      // Alternative Risk Analysis
+      alternativeRiskScore: alternativeRiskAnalysis.totalRiskScore,
+      alternativeRiskLevel: alternativeRiskAnalysis.riskLevel,
+      pepAnalysis: alternativeRiskAnalysis.pepAnalysis,
+      sanctionAnalysis: alternativeRiskAnalysis.sanctionAnalysis,
+      deforestationAnalysis: alternativeRiskAnalysis.deforestationAnalysis,
+      // Local Risk
+      localRiskScore: localRisk.riskScore,
+      localRiskFactors: localRisk.riskFactors,
+    };
+  } catch (e) {
+    console.error(`[Store] Error analyzing ${cnpj}:`, e);
+    return null;
+  }
+}
+
+// ── Filtering and Sorting ─────────────────────────────────────────────────────
+
+export function applyFilters() {
+  let filtered = [...state.records];
+
+  // Type filter
+  if (state.filters.type === 'high') {
+    filtered = filtered.filter(r => r.compositeScore >= 70);
+  } else if (state.filters.type === 'medium') {
+    filtered = filtered.filter(r => r.compositeScore >= 50 && r.compositeScore < 70);
+  } else if (state.filters.type === 'low') {
+    filtered = filtered.filter(r => r.compositeScore < 50);
+  }
+
+  // Score range filter
+  filtered = filtered.filter(r =>
+    r.compositeScore >= state.filters.scoreMin &&
+    r.compositeScore <= state.filters.scoreMax
+  );
+
+  // Anti-corruption filter
+  if (state.filters.antiCorruptionOnly) {
+    filtered = filtered.filter(r =>
+      r.shareholderAnalysis?.pepCount > 0 ||
+      r.cnepStatus === 'FOUND' ||
+      r.procurementRiskScore >= 60
+    );
+  }
+
+  // Sort
+  if (state.sort === 'vulnerabilityDesc') {
+    filtered.sort((a, b) => b.vulnerabilityScore - a.vulnerabilityScore);
+  } else if (state.sort === 'nameAsc') {
+    filtered.sort((a, b) => (a.razaoSocial || '').localeCompare(b.razaoSocial || ''));
+  } else if (state.sort === 'scoreDesc') {
+    filtered.sort((a, b) => b.compositeScore - a.compositeScore);
+  }
+
+  state.filtered = filtered;
+  state.currentPage = 1;
+  notify();
+}
+
+export function setFilter(key, value) {
+  state.filters[key] = value;
+  applyFilters();
+}
+
+export function setSort(sortKey) {
+  state.sort = sortKey;
+  applyFilters();
+}
+
+// ── Pagination ────────────────────────────────────────────────────────────────
+
+export function getPaginatedRecords() {
+  const start = (state.currentPage - 1) * state.pageSize;
+  const end = start + state.pageSize;
+  return state.filtered.slice(start, end);
+}
+
+export function getTotalPages() {
+  return Math.ceil(state.filtered.length / state.pageSize);
+}
+
+export function setPage(pageNum) {
+  state.currentPage = Math.max(1, Math.min(pageNum, getTotalPages()));
+  notify();
+}
+
+// ── Export helpers ────────────────────────────────────────────────────────────
+
+export function fmtCNPJ(cnpj) {
+  const c = (cnpj || '').replace(/\D/g, '');
   return c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
 }
 
-function normalize(str) {
-  return (str || '').toLowerCase()
-    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-}
-
-function formatDate(dateStr) {
+export function formatDate(dateStr) {
   if (!dateStr) return '';
   const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if (m) return `${m[3]}/${m[2]}/${m[1]}`;

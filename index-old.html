@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lycalopex — Inteligência ESG para Campo</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="header-content">
+        <h1 class="header-title">🌍 Lycalopex ESG Intelligence</h1>
+        <p class="header-subtitle">Pipeline completo de vulnerabilidade, risco ambiental, corrupção e ESG para estruturas agro-industriais brasileiras.</p>
+      </div>
+    </header>
+
+    <main class="main">
+      <!-- Step 1: Entrada de dados (tipo “carrinho”) -->
+      <section class="card">
+        <div class="card-header">Passo 1 — Escolha o modo de entrada</div>
+        <div class="card-section">
+          <div class="table-controls">
+            <div class="control-group">
+              <label for="cnpj-input">CNPJs (um por linha ou separados por vírgula)</label>
+              <textarea id="cnpj-input" rows="4" class="w-full" placeholder="00.000.000/0000-00&#10;11.111.111/1111-11"></textarea>
+            </div>
+            <div class="control-group">
+              <label for="city-search-input">Modo Infrator — Buscar por município (base IBAMA regional)</label>
+              <div class="flex gap-1">
+                <input id="city-search-input" type="text" placeholder="Ex: Cascavel, Toledo, Foz do Iguaçu" class="w-full" />
+                <button id="btn-outlaw-search" class="btn btn-secondary">🔎 Buscar Infratores</button>
+              </div>
+              <label class="mt-1">
+                <input type="checkbox" id="toggle-outlaw-only" />
+                Mostrar apenas estruturas com alerta ambiental ou anticorrupção
+              </label>
+            </div>
+            <div class="control-group">
+              <label>&nbsp;</label>
+              <div class="flex gap-1">
+                <button id="btn-load" class="btn btn-primary">⬡ Carregar CNPJs</button>
+                <button id="btn-demo" class="btn btn-secondary">🎛 Carregar Demo</button>
+                <button id="btn-export" class="btn btn-secondary">📥 Exportar CSV</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Passo 2: Filtros -->
+      <section class="card">
+        <div class="card-header">Passo 2 — Refinar com filtros</div>
+        <div class="card-section table-controls">
+          <div class="control-group">
+            <label for="filter-type">Tipo de estrutura</label>
+            <select id="filter-type">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="control-group">
+            <label for="filter-anticorr">Status anticorrupção (CEIS/CNEP)</label>
+            <select id="filter-anticorr">
+              <option value="">Todos</option>
+              <option value="found">Com alerta</option>
+              <option value="clean">Sem alerta</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <!-- Passo 3: Resultados -->
+      <section class="card">
+        <div class="card-header flex justify-between items-center">
+          <span>Passo 3 — Explorar estruturas priorizadas</span>
+          <span id="record-count" class="text-muted">0 estruturas</span>
+        </div>
+
+        <div id="error-banner" class="text-muted hidden" style="margin-bottom: 1rem;"></div>
+
+        <div id="stats-bar" class="stats-bar"></div>
+
+        <div id="table-container">
+          <div class="table-controls">
+            <div class="control-group">
+              <label>Ordenar por</label>
+              <div class="flex gap-1">
+                <button type="button" class="btn btn-secondary" data-sort="vulnerability">Vulnerabilidade</button>
+                <button type="button" class="btn btn-secondary" data-sort="env">Risco Ambiental</button>
+                <button type="button" class="btn btn-secondary" data-sort="esg">ESG Risk</button>
+                <button type="button" class="btn btn-secondary" data-sort="municipio">Município</button>
+              </div>
+            </div>
+          </div>
+
+          <table id="results-table" class="results-table">
+            <thead>
+              <tr>
+                <th data-sort="vulnerability">#</th>
+                <th>CNPJ</th>
+                <th data-sort="razaoSocial">Estrutura</th>
+                <th data-sort="municipio">Município</th>
+                <th>Vulnerabilidade</th>
+                <th>Resistência</th>
+                <th>Ambiental</th>
+                <th>Compliance</th>
+                <th data-sort="esg">ESG</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="table-body">
+              <tr class="empty-state">
+                <td colspan="10">
+                  <div class="empty-inner">
+                    <div class="empty-icon">⬡</div>
+                    <p>Nenhuma estrutura carregada.</p>
+                    <p class="empty-sub">Informe CNPJs no passo 1 ou use o modo Infrator por município.</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Loading overlay -->
+      <div id="loading-overlay" class="hidden">
+        <div id="loading-msg">Carregando...</div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast notification -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <!-- ESG Intelligence API Key Configuration -->
+  <script>
+    window.__LYCALOPEX_API_KEY__ = '1d5r8yt963h2v4g5h6j3k138sbfiec21';
+  </script>
+
+  <!-- App entry (v1/v3 table-based UI) -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
