@@ -309,6 +309,15 @@
   </script>
 
   <!-- App entry -->
-  <script type="module" src="js/app-map.js"></script>
+  <script type="module">
+    console.log('[Lycalopex] app-map bootstrap starting...');
+    import('./js/app-map.js').catch(err => {
+      console.error('[Lycalopex] Failed to load app-map.js', err);
+      const panel = document.getElementById('region-map-container');
+      if (panel) {
+        panel.innerHTML = '<div style="padding:1rem;color:#fff;font-weight:600;">Falha ao carregar interface interativa. Verifique o console do navegador.</div>';
+      }
+    });
+  </script>
 </body>
 </html>
