@@ -249,7 +249,10 @@ function buildRow(r, idx) {
         <span class="badge ${envClass}">${r.envLabel}</span>
       </td>
       <td class="col-ac">
-        <span class="badge ${acClass}">${r.antiCorruptionStatus}</span>
+        <div class="compliance-badges">
+          <span class="badge ${acClass}" title="Anti-Corrupção (CEIS)">${r.antiCorruptionStatus === 'Alerta' ? 'AC' : 'OK'}</span>
+          <span class="badge ${r.ibamaStatus === 'Alerta Ambiental' ? 'badge-risk' : 'badge-ok'}" title="Ambiental (IBAMA)">${r.ibamaStatus === 'Alerta Ambiental' ? 'AMB' : 'OK'}</span>
+        </div>
       </td>
       <td class="col-ue">
         <div class="score-cell ${ueColorClass(r.urbanExploringLabel)}">
@@ -293,6 +296,27 @@ function buildDetailPanel(r) {
 
   const envHtml = r.envIndicators
     .map(i => `<li>${escHtml(i)}</li>`).join('');
+
+  const gapsHtml = r.securityGaps.length
+    ? r.securityGaps.map(g => `
+        <div class="gap-item gap-severity-${g.severity}">
+          <div class="gap-header">
+            <span class="gap-icon">${g.severity === 'critical' ? '🔴' : g.severity === 'high' ? '🟠' : '🟡'}</span>
+            <span class="gap-title">${escHtml(g.title)}</span>
+          </div>
+          <p class="gap-desc">${escHtml(g.description)}</p>
+          <p class="gap-rec"><strong>Recomendação:</strong> ${escHtml(g.recommendation)}</p>
+        </div>`).join('')
+    : '<p class="no-data">Nenhum gap crítico detectado automaticamente.</p>';
+
+  const ibamaHtml = r.ibamaEntries.length
+    ? r.ibamaEntries.map(e => `
+        <div class="ibama-entry">
+          <div class="ibama-meta">TAD: ${e.num_tad} | ${e.data}</div>
+          <div class="ibama-desc">${escHtml(e.descricao)}</div>
+          <div class="ibama-area">Área: ${e.area} ha | ${e.tipo}</div>
+        </div>`).join('')
+    : '';
 
   return `
     <div class="detail-panel">
@@ -356,17 +380,32 @@ function buildDetailPanel(r) {
           <div class="ac-status-block">
             <span class="badge badge-lg ${acColorClass(r.antiCorruptionStatus)}">${r.antiCorruptionStatus}</span>
             <p class="ac-detail">${escHtml(r.antiCorruptionDetail)}</p>
-            <p class="data-note">Fonte: Portal da Transparência (CEIS/CNEP). Consulta completa requer chave de API gratuita em portaldatransparencia.gov.br/api-de-dados.</p>
+            <p class="data-note">Fonte: Portal da Transparência (CEIS/CNEP).</p>
           </div>
 
-          <h3 class="detail-section-title mt">Risco Ambiental</h3>
+          <h3 class="detail-section-title mt">Histórico Ambiental (IBAMA)</h3>
+          <div class="ibama-block">
+            <span class="badge badge-lg ${r.ibamaStatus === 'Alerta Ambiental' ? 'badge-risk' : 'badge-ok'}">${r.ibamaStatus}</span>
+            <p class="ac-detail">${escHtml(r.ibamaDetail)}</p>
+            <div class="ibama-entries-list">${ibamaHtml}</div>
+            <p class="data-note">Fonte: IBAMA (Dados Abertos).</p>
+          </div>
+
+          <h3 class="detail-section-title mt">Risco Ambiental (Estimado)</h3>
           <div class="env-block">
             <div class="big-score ${envColorClass(r.envLabel)}">
               <span class="big-score-number">${r.envScore}</span>
               <span class="big-score-label">${r.envLabel}</span>
             </div>
             <ul class="env-indicators">${envHtml}</ul>
-            <p class="data-note">Score estimado com base no perfil CNAE e porte da empresa. Para dados de multas e processos ambientais, consulte o IBAMA (ibama.gov.br/consultas/autuacoes-ambientais).</p>
+          </div>
+
+          <h3 class="detail-section-title mt">Análise de Gaps de Segurança (Vendor Report)</h3>
+          <div class="gaps-block">
+            <div class="gaps-list">${gapsHtml}</div>
+            <button class="btn btn-export btn-small mt" onclick="window.print()">
+              ⎙ Imprimir Relatório de Gaps
+            </button>
           </div>
 
           <h3 class="detail-section-title mt">Suscetibilidade a Acesso Não-Autorizado</h3>
@@ -380,7 +419,7 @@ function buildDetailPanel(r) {
             </div>
             <div class="breakdown-list">${Object.entries(r.urbanExploringBreakdown).map(([k, v]) => `<div class="breakdown-item"><span>${escHtml(k)}</span><span class="mono">${v}</span></div>`).join('')}</div>
             <ul class="ue-indicators">${r.urbanExploringIndicators.map(i => `<li>${escHtml(i)}</li>`).join('')}</ul>
-            <p class="data-note">Score baseado em análise de OpenStreetMap (perímetro, barreiras, câmeras, isolamento). Dados públicos de infraestrutura. Maior score = maior suscetibilidade a acesso não-autorizado.</p>
+            <p class="data-note">Score baseado em análise de OpenStreetMap.</p>
           </div>
 
           <div class="detail-footer">

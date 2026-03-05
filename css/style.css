@@ -325,3 +325,95 @@
     min-height: 36px;
   }
 }
+
+/* ── Compliance Badges ────────────────────────────────────────────────── */
+.compliance-badges {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: wrap;
+}
+
+.compliance-badges .badge {
+  font-size: 0.65rem;
+  padding: 0.15rem 0.35rem;
+  min-width: 28px;
+  text-align: center;
+}
+
+/* ── Gaps & IBAMA ────────────────────────────────────────────────────── */
+.gap-item {
+  background: #fdfdfd;
+  border-left: 4px solid #ccc;
+  padding: 0.75rem;
+  margin-bottom: 0.75rem;
+  border-radius: 4px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.gap-severity-critical { border-left-color: #E53E3E; background: #FFF5F5; }
+.gap-severity-high     { border-left-color: #F5A623; background: #FFFAF0; }
+.gap-severity-medium   { border-left-color: #D69E2E; background: #FFFFF0; }
+
+.gap-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.gap-title {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #2D3748;
+}
+
+.gap-desc {
+  font-size: 0.8rem;
+  color: #4A5568;
+  margin-bottom: 0.25rem;
+}
+
+.gap-rec {
+  font-size: 0.8rem;
+  color: #2D3748;
+  background: rgba(255,255,255,0.5);
+  padding: 0.25rem 0.5rem;
+  border-radius: 2px;
+}
+
+.ibama-entry {
+  border-bottom: 1px solid #edf2f7;
+  padding: 0.5rem 0;
+}
+
+.ibama-meta {
+  font-size: 0.7rem;
+  color: #718096;
+  font-family: var(--mono);
+}
+
+.ibama-desc {
+  font-size: 0.8rem;
+  color: #2D3748;
+  margin: 0.15rem 0;
+}
+
+.ibama-area {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #E53E3E;
+}
+
+.btn-small {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.75rem;
+}
+
+@media print {
+  .app-header, .hero-banner, .input-zone, .filter-bar, .app-footer, .btn-load, .btn-demo, .btn-export {
+    display: none !important;
+  }
+  .row-main:not(.expanded) { display: none !important; }
+  .row-detail.hidden { display: none !important; }
+  .detail-panel { border: none; box-shadow: none; }
+}

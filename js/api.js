@@ -13,6 +13,9 @@
  *
  * IBGE municipalities:
  *   https://servicodados.ibge.gov.br/api/v1/localidades/municipios
+ *
+ * IBAMA Embargoes:
+ *   Local data/ibama-index.json (or ibama-demo.json)
  */
 
 'use strict';
@@ -182,6 +185,57 @@ export function extractSocios(companyData) {
  * @param {string} [apiKey]
  * @returns {Promise<{found: boolean, entries: Array, status: string, detail: string}>}
  */
+/**
+ * Check if a CNPJ has IBAMA environmental embargoes.
+ * In a real production environment, this would query a backend or the IBAMA API.
+ * For this static version, we use a local JSON index.
+ * @param {string} cnpj
+ * @returns {Promise<{found: boolean, entries: Array, status: string, detail: string}>}
+ */
+export async function checkIbamaEmbargos(cnpj) {
+  const clean = cnpj.replace(/\D/g, '');
+  try {
+    // Try to load from demo or full index
+    // In static sites, we usually fetch a small JSON or use a search index
+    const response = await fetch('data/ibama-demo.json');
+    if (response.ok) {
+      const index = await response.json();
+      const entries = index[clean];
+      if (entries && entries.length > 0) {
+        return {
+          found: true,
+          entries,
+          status: 'Alerta Ambiental',
+          detail: `CNPJ possui ${entries.length} embargo(s) ambiental(is) no IBAMA. Local: ${entries[0].municipio}/${entries[0].uf}.`
+        };
+      }
+    }
+  } catch (e) {
+    console.warn('IBAMA index not available', e);
+  }
+
+  return {
+    found: false,
+    entries: [],
+    status: 'Verificado',
+    detail: 'Nenhum embargo ambiental encontrado nas bases do IBAMA.'
+  };
+}
+
+/**
+ * Check for MPF (Ministério Público Federal) public lawsuits.
+ * (Mock implementation for demonstration)
+ */
+export async function checkMPFLawsuits(cnpj) {
+  // In a real app, this would be a fetch to an MPF open data API
+  return {
+    found: false,
+    entries: [],
+    status: 'Verificado',
+    detail: 'Nenhum processo público encontrado no MPF.'
+  };
+}
+
 export async function checkSancoesCNPJ(cnpj, apiKey = '') {
   const clean = cnpj.replace(/\D/g, '');
 

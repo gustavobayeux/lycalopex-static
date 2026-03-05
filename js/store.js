@@ -11,9 +11,10 @@
 
 'use strict';
 
-import { fetchCNPJ, extractSocios, checkSancoesCNPJ, checkAntiCorrupcaoBR, sequentialQueue } from './api.js';
+import { fetchCNPJ, extractSocios, checkSancoesCNPJ, checkAntiCorrupcaoBR, checkIbamaEmbargos, sequentialQueue } from './api.js';
 import { calcResistanceScore, calcVulnerabilityScore, calcEnvScore, getCNAEProfile, maskCPF, hashCPF } from './scoring.js';
 import { calcUrbanExploringScore } from './urban-exploring.js';
+import { analyzeSecurityGaps } from './gap-analysis.js';
 
 // ── Cache helpers ─────────────────────────────────────────────────────────────
 
@@ -164,7 +165,10 @@ async function buildRecord(raw, cnpj) {
   // Urban exploring susceptibility
   const ueResult = await calcUrbanExploringScore(raw);
 
-  return {
+  // IBAMA environmental embargoes check
+  const ibamaResult = await checkIbamaEmbargos(cnpj);
+
+  const partialRecord = {
     cnpj: fmtCNPJ(cnpj),
     razaoSocial: raw.nome || '—',
     nomeFantasia: raw.fantasia || '',
@@ -194,11 +198,22 @@ async function buildRecord(raw, cnpj) {
     envIndicators,
     antiCorruptionStatus: acResult.status,
     antiCorruptionDetail: acResult.detail,
+    ibamaStatus: ibamaResult.status,
+    ibamaDetail: ibamaResult.detail,
+    ibamaEntries: ibamaResult.entries,
     urbanExploringScore: ueResult.score,
     urbanExploringLabel: ueResult.label,
     urbanExploringBreakdown: ueResult.breakdown,
     urbanExploringIndicators: ueResult.indicators,
     lastUpdated: new Date().toLocaleDateString('pt-BR'),
+  };
+
+  // Security gap analysis
+  const securityGaps = analyzeSecurityGaps(partialRecord);
+
+  return {
+    ...partialRecord,
+    securityGaps,
   };
 }
 
@@ -280,6 +295,7 @@ export function exportCSV() {
     'Score Resistência Física', 'Score Vulnerabilidade Incêndio', 'Nível Vulnerabilidade',
     'Score Risco Ambiental', 'Nível Risco Ambiental',
     'Status Anti-Corrupção', 'Detalhe Anti-Corrupção',
+    'Status IBAMA', 'Gaps de Segurança',
     'Sócios (mascarados)', 'Justificativa Técnica', 'Última Atualização'
   ];
 
@@ -290,6 +306,8 @@ export function exportCSV() {
     r.resistanceScore, r.vulnerabilityScore, r.vulnerabilityLabel,
     r.envScore, r.envLabel,
     r.antiCorruptionStatus, r.antiCorruptionDetail,
+    r.ibamaStatus,
+    r.securityGaps.map(g => `${g.title}: ${g.description}`).join(' | '),
     r.socios.map(s => `${s.nome} (${s.cpfMasked})`).join(' | '),
     r.resistanceJustification,
     r.lastUpdated,
@@ -323,6 +341,11 @@ export const DEMO_CNPJS = [
   '03853896000140', // Marfrig
   '67620377000114', // Minerva Foods
   '47508411000156', // Cargill Agrícola
+  '33453729000172', // Exemplo com embargo ambiental
+  '42032520000126', // Exemplo com embargo ambiental
+  '49338432000104', // Exemplo com embargo ambiental
+  '20042630000136', // Exemplo com embargo ambiental
+  '41637164000101', // Exemplo com embargo ambiental
 ];
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
