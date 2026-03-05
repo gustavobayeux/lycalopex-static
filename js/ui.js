@@ -139,6 +139,8 @@ function renderStats(s) {
   const shown = s.filtered.length;
   const critical = s.filtered.filter(r => r.vulnerabilityLabel === 'Crítico').length;
   const alerts   = s.filtered.filter(r => r.antiCorruptionStatus === 'Alerta').length;
+  const esgCritical = s.filtered.filter(r => r.esgLabel === 'Crítico').length;
+  const pepAlerts = s.filtered.filter(r => (r.shareholderAnalysis?.pepCount || 0) > 0).length;
 
   recordCount.textContent = `${shown} de ${total} estruturas`;
 
@@ -153,11 +155,19 @@ function renderStats(s) {
     </div>
     <div class="stat-item stat-critical">
       <span class="stat-value mono">${critical}</span>
-      <span class="stat-label">Vulnerabilidade crítica</span>
+      <span class="stat-label">Vuln. crítica</span>
     </div>
     <div class="stat-item stat-alert">
       <span class="stat-value mono">${alerts}</span>
-      <span class="stat-label">Alertas anti-corrupção</span>
+      <span class="stat-label">Alertas CEIS</span>
+    </div>
+    <div class="stat-item stat-esg">
+      <span class="stat-value mono">${esgCritical}</span>
+      <span class="stat-label">ESG Crítico</span>
+    </div>
+    <div class="stat-item stat-pep">
+      <span class="stat-value mono">${pepAlerts}</span>
+      <span class="stat-label">PEPs detectados</span>
     </div>
   `;
 }
@@ -275,12 +285,21 @@ function buildRow(r, idx) {
           <span class="score-label">${r.urbanExploringLabel}</span>
         </div>
       </td>
+      <td class="col-esg">
+        <div class="score-cell ${esgColorClass(r.esgLabel)}">
+          <span class="score-number">${r.esgScore || '—'}</span>
+          <span class="score-label">${r.esgLabel || 'Calc...'}</span>
+          ${(r.shareholderAnalysis?.pepCount || 0) > 0
+            ? `<span class="pep-badge" title="PEP detectado no quadro societário">🔴 PEP</span>`
+            : ''}
+        </div>
+      </td>
       <td class="col-expand">
         <span class="expand-icon">▶</span>
       </td>
     </tr>
     <tr class="row-detail hidden" id="detail-${id}">
-      <td colspan="10">
+      <td colspan="11">
         ${buildDetailPanel(r)}
       </td>
     </tr>
@@ -437,9 +456,99 @@ function buildDetailPanel(r) {
             <p class="data-note">Score baseado em análise de OpenStreetMap.</p>
           </div>
 
+          <h3 class="detail-section-title mt">Inteligência ESG — Plano de Ação para Campo</h3>
+          <div class="esg-block">
+            <div class="big-score ${esgColorClass(r.esgLabel)}">
+              <span class="big-score-number">${r.esgScore || '—'}</span>
+              <span class="big-score-label">${r.esgLabel || 'Calculando...'}</span>
+            </div>
+            <p class="esg-priority"><strong>Prioridade de Campo:</strong> ${escHtml(r.esgFieldPriority || 'Não calculada')}</p>
+            
+            <div class="esg-components">
+              <div class="esg-component">
+                <span class="component-label">Ambiental (E)</span>
+                <span class="component-value">${r.esgComponents?.environmental || 0}/40</span>
+              </div>
+              <div class="esg-component">
+                <span class="component-label">Social/Governança (S+G)</span>
+                <span class="component-value">${r.esgComponents?.socialGovernance || 0}/35</span>
+              </div>
+              <div class="esg-component">
+                <span class="component-label">Poder Corporativo (P)</span>
+                <span class="component-value">${r.esgComponents?.corporatePower || 0}/25</span>
+              </div>
+            </div>
+
+            <h4 class="detail-subsection-title">Ações Imediatas para Agente de Campo</h4>
+            <ul class="action-items">
+              ${(r.esgActionItems || []).map(item => `<li>${escHtml(item)}</li>`).join('')}
+            </ul>
+
+            ${r.shareholderAnalysis ? `
+              <h4 class="detail-subsection-title">Análise de Quadro Societário</h4>
+              <div class="shareholder-analysis">
+                <p><strong>Total de sócios:</strong> ${r.socios?.length || 0}</p>
+                <p><strong>PEPs detectados:</strong> ${r.shareholderAnalysis.pepCount || 0}</p>
+                <p><strong>Concentração societária:</strong> ${r.shareholderAnalysis.concentrationScore || 0}/100</p>
+                <p><strong>Influência corporativa:</strong> ${r.shareholderAnalysis.influenceScore || 0}/100</p>
+                ${r.shareholderAnalysis.economicGroupIndicators?.length > 0 ? `
+                  <div class="group-indicators">
+                    <strong>Indicadores de Grupo Econômico:</strong>
+                    <ul>
+                      ${r.shareholderAnalysis.economicGroupIndicators.map(ind => `<li>${escHtml(ind)}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+
+            ${r.cnepStatus && r.cnepStatus !== 'Pendente' ? `
+              <h4 class="detail-subsection-title">Status CNEP (Lei Anticorrupção)</h4>
+              <p class="badge badge-lg ${r.cnepStatus === 'Punida (CNEP)' ? 'badge-risk' : 'badge-ok'}">${r.cnepStatus}</p>
+              <p>${escHtml(r.cnepDetail || '')}</p>
+            ` : ''}
+
+            ${r.leniencyStatus && r.leniencyStatus !== 'Pendente' ? `
+              <h4 class="detail-subsection-title">Acordo de Leniência</h4>
+              <p class="badge badge-lg badge-warn">${r.leniencyStatus}</p>
+              <p>${escHtml(r.leniencyDetail || '')}</p>
+            ` : ''}
+
+            ${r.fieldActionPlan ? `
+              <h4 class="detail-subsection-title">Plano de Ação Estruturado</h4>
+              <div class="field-action-plan">
+                ${r.fieldActionPlan.documentsToRequest?.length > 0 ? `
+                  <div class="plan-section">
+                    <strong>📋 Documentos a Solicitar:</strong>
+                    <ul>
+                      ${r.fieldActionPlan.documentsToRequest.map(doc => `<li>${escHtml(doc)}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+                ${r.fieldActionPlan.authoritiesToNotify?.length > 0 ? `
+                  <div class="plan-section">
+                    <strong>📞 Autoridades a Notificar:</strong>
+                    <ul>
+                      ${r.fieldActionPlan.authoritiesToNotify.map(auth => `<li>${escHtml(auth)}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+                ${r.fieldActionPlan.legalReferences?.length > 0 ? `
+                  <div class="plan-section">
+                    <strong>⚖️ Referências Legais:</strong>
+                    <ul>
+                      ${r.fieldActionPlan.legalReferences.map(ref => `<li>${escHtml(ref)}</li>`).join('')}
+                    </ul>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+          </div>
+
           <div class="detail-footer">
-            <span class="data-note">Fontes: Receita Federal, Brasil.IO, Portal da Transparência, IBGE CNAE, OpenStreetMap.</span>
+            <span class="data-note">Fontes: Receita Federal, Brasil.IO, Portal da Transparência, IBGE CNAE, OpenStreetMap, IBAMA, CGU.</span>
             <span class="data-note">Última atualização: ${r.lastUpdated}</span>
+            <span class="data-note">ESG Intelligence v2.0 — Desenvolvido para agentes de campo IBAMA e ativistas Greenpeace.</span>
           </div>
         </div>
 
@@ -533,5 +642,14 @@ function ueBarColor(label) {
     case 'Alto':     return '#F5A623';
     case 'Moderado': return '#D69E2E';
     default:         return '#38A169';
+  }
+}
+
+function esgColorClass(label) {
+  switch (label) {
+    case 'Crítico':  return 'score-critical';
+    case 'Alto':     return 'score-high';
+    case 'Moderado': return 'score-moderate';
+    default:         return 'score-low';
   }
 }

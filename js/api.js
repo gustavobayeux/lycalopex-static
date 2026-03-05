@@ -301,6 +301,95 @@ export async function checkAntiCorrupcaoBR(cpfHash) {
   return { found: false, status: 'Pendente' };
 }
 
+// ── Brasil.IO — Extended Shareholder Data (QSA) ─────────────────────────────
+
+/**
+ * Fetch extended shareholder data from Brasil.IO socios-brasil dataset.
+ * This supplements the QSA data already embedded in publica.cnpj.ws responses
+ * with additional fields like entry date and qualification details.
+ *
+ * Endpoint: GET https://brasil.io/api/dataset/socios-brasil/socios/?cnpj={cnpj}
+ * Auth: None required (public API, ~1 req/s)
+ *
+ * @param {string} cnpj - Raw 14-digit CNPJ
+ * @returns {Promise<Array>}
+ */
+export async function fetchSociosBrasilIO(cnpj) {
+  const clean = cnpj.replace(/\D/g, '');
+  const url = `https://brasil.io/api/dataset/socios-brasil/socios/?cnpj=${clean}`;
+  try {
+    const res = await fetch(url, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Lycalopex/2.0 (campo.ibama.gov.br)',
+      },
+      signal: AbortSignal.timeout(10000),
+    });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return (data.results || []).map(s => ({
+      nome: s.nome_socio || '—',
+      cpfCnpj: s.cpf_cnpj_socio || '',
+      qualificacao: s.qualificacao_socio || '—',
+      dataEntrada: s.data_entrada_sociedade || '',
+      tipo: s.tipo_socio || '',
+      pais: s.pais || 'Brasil',
+      // Additional Brasil.IO fields
+      nomePaisOrigem: s.nome_pais_origem || '',
+      codigoQualificacao: s.codigo_qualificacao || '',
+    }));
+  } catch (e) {
+    console.warn('[Lycalopex] Brasil.IO socios fetch failed:', e.message);
+    return [];
+  }
+}
+
+// ── Portal da Transparência — Pessoa Jurídica ─────────────────────────────────
+
+/**
+ * Fetch company data from Portal da Transparência pessoa-juridica endpoint.
+ * Returns government contract history and sanctions overview for a CNPJ.
+ *
+ * Endpoint: GET /api-de-dados/pessoa-juridica?cnpj={cnpj}
+ * Auth: Optional free API key
+ *
+ * @param {string} cnpj
+ * @param {string} [apiKey]
+ * @returns {Promise<object|null>}
+ */
+export async function checkPessoaJuridica(cnpj, apiKey = '') {
+  const clean = cnpj.replace(/\D/g, '');
+  const headers = { 'Accept': 'application/json' };
+  if (apiKey) headers['chave-api-dados'] = apiKey;
+
+  if (!apiKey) {
+    return {
+      found: false,
+      status: 'Pendente',
+      detail: 'Consulta ao Portal da Transparência (Pessoa Jurídica) pendente. Configure chave gratuita.',
+      data: null,
+    };
+  }
+
+  try {
+    const url = `https://api.portaldatransparencia.gov.br/api-de-dados/pessoa-juridica?cnpj=${clean}`;
+    const res = await fetch(url, { headers, signal: AbortSignal.timeout(8000) });
+    if (res.ok) {
+      const data = await res.json();
+      return {
+        found: true,
+        status: 'Consultado',
+        detail: `Empresa encontrada no Portal da Transparência. Razão Social: ${data.razaoSocial || 'não informada'}.`,
+        data,
+      };
+    }
+  } catch (e) {
+    console.warn('[Lycalopex] Pessoa Jurídica check failed:', e.message);
+  }
+
+  return { found: false, status: 'Erro', detail: 'Falha na consulta ao Portal da Transparência.', data: null };
+}
+
 // ── IBGE — Municípios ────────────────────────────────────────────────────────
 
 /**

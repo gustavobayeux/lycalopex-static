@@ -180,6 +180,9 @@
           <th class="col-ue" data-sort="ue" tabindex="0" role="columnheader" aria-sort="none">
             Acesso Não-Aut.
           </th>
+          <th class="col-esg" data-sort="esg" tabindex="0" role="columnheader" aria-sort="none">
+            ESG Risk Index
+          </th>
           <th class="col-expand" aria-label="Expandir detalhes"></th>
         </tr>
       </thead>
@@ -228,7 +231,15 @@
 <!-- ── Toast notification ───────────────────────────────────────────────── -->
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-<!-- ── App entry (ES modules) ───────────────────────────────────────────── -->
+<!<!-- ── ESG Intelligence API Key Configuration ──────────────────────────────────────── -->
+<script>
+  // Configure Portal da Transparência API key for CNEP/CEIS/PEP lookups
+  // Obtenha uma chave gratuita em: https://portaldatransparencia.gov.br/api-de-dados
+  window.__LYCALOPEX_API_KEY__ = 'CONFIGURE_HERE';
+  // Example: window.__LYCALOPEX_API_KEY__ = 'sua-chave-aqui';
+</script>
+
+<!-- ── App entry (ES modules) ──────────────────────────────────────── -->
 <script type="module" src="js/app.js"></script>
 
 </body>

@@ -11,7 +11,8 @@
 
 'use strict';
 
-import { fetchCNPJ, extractSocios, checkSancoesCNPJ, checkAntiCorrupcaoBR, checkIbamaEmbargos, sequentialQueue } from './api.js';
+import { fetchCNPJ, extractSocios, checkSancoesCNPJ, checkAntiCorrupcaoBR, checkIbamaEmbargos, fetchSociosBrasilIO, checkPessoaJuridica, sequentialQueue } from './api.js';
+import { runESGIntelligence } from './esg-intelligence.js';
 import { calcResistanceScore, calcVulnerabilityScore, calcEnvScore, getCNAEProfile, maskCPF, hashCPF } from './scoring.js';
 import { calcUrbanExploringScore } from './urban-exploring.js';
 import { analyzeSecurityGaps } from './gap-analysis.js';
@@ -160,7 +161,7 @@ async function buildRecord(raw, cnpj) {
     tipo: s.tipo,
   }));
 
-  // Anti-corruption check
+  // Anti-corruption check (CEIS)
   const acResult = await checkSancoesCNPJ(cnpj);
 
   // Urban exploring susceptibility
@@ -168,6 +169,25 @@ async function buildRecord(raw, cnpj) {
 
   // IBAMA environmental embargoes check
   const ibamaResult = await checkIbamaEmbargos(cnpj);
+
+  // Extended shareholder data from Brasil.IO (supplements cnpj.ws QSA)
+  const sociosBrasilIO = await fetchSociosBrasilIO(cnpj);
+  // Merge: prefer cnpj.ws data but fill gaps from Brasil.IO
+  const sociosMerged = socios.length > 0 ? socios.map((s, i) => ({
+    ...s,
+    pais: sociosBrasilIO[i]?.pais || 'Brasil',
+    nomePaisOrigem: sociosBrasilIO[i]?.nomePaisOrigem || '',
+    codigoQualificacao: sociosBrasilIO[i]?.codigoQualificacao || '',
+  })) : sociosBrasilIO.map(s => ({
+    nome: s.nome,
+    cpfMasked: maskCPF(s.cpfCnpj),
+    cpfHash: hashCPF(s.cpfCnpj),
+    qualificacao: s.qualificacao,
+    dataEntrada: formatDate(s.dataEntrada),
+    tipo: s.tipo,
+    pais: s.pais,
+    nomePaisOrigem: s.nomePaisOrigem,
+  }));
 
   const partialRecord = {
     cnpj: fmtCNPJ(cnpj),
@@ -188,7 +208,8 @@ async function buildRecord(raw, cnpj) {
     telefone: raw.telefone || '',
     cnaeLabel: profile.label,
     cnaeType: profile.type,
-    socios,
+    socios: sociosMerged.length > 0 ? sociosMerged : socios,
+    sociosBrasilIO: sociosBrasilIO.length,
     resistanceScore: resistance,
     resistanceBreakdown: breakdown,
     resistanceJustification: justification,
@@ -212,9 +233,31 @@ async function buildRecord(raw, cnpj) {
   // Security gap analysis
   const securityGaps = analyzeSecurityGaps(partialRecord);
 
+  // ESG Intelligence: PEP detection, shareholder graph, ESG Risk Index, field action plan
+  // Uses the merged socios list for PEP checking
+  const apiKey = window.__LYCALOPEX_API_KEY__ || '';
+  const esgIntelligence = await runESGIntelligence(
+    { ...partialRecord, securityGaps },
+    (sociosMerged.length > 0 ? sociosMerged : socios),
+    apiKey
+  );
+
   return {
     ...partialRecord,
     securityGaps,
+    // ESG Intelligence fields
+    cnepStatus: esgIntelligence.cnepResult.status,
+    cnepDetail: esgIntelligence.cnepResult.detail,
+    cnepEntries: esgIntelligence.cnepResult.entries,
+    leniencyStatus: esgIntelligence.leniencyResult.status,
+    leniencyDetail: esgIntelligence.leniencyResult.detail,
+    shareholderAnalysis: esgIntelligence.shareholderAnalysis,
+    esgScore: esgIntelligence.esgIndex.score,
+    esgLabel: esgIntelligence.esgIndex.label,
+    esgFieldPriority: esgIntelligence.esgIndex.fieldPriority,
+    esgComponents: esgIntelligence.esgIndex.components,
+    esgActionItems: esgIntelligence.esgIndex.actionItems,
+    fieldActionPlan: esgIntelligence.fieldActionPlan,
   };
 }
 
@@ -270,6 +313,7 @@ export function applyFilters() {
       case 'vulnerability': av = a.vulnerabilityScore; bv = b.vulnerabilityScore; break;
       case 'resistance':    av = a.resistanceScore;    bv = b.resistanceScore;    break;
       case 'env':           av = a.envScore;           bv = b.envScore;           break;
+      case 'esg':           av = a.esgScore || 0;      bv = b.esgScore || 0;      break;
       case 'razaoSocial':   av = a.razaoSocial;        bv = b.razaoSocial;        break;
       case 'municipio':     av = a.municipio;          bv = b.municipio;          break;
       default:              av = a.vulnerabilityScore; bv = b.vulnerabilityScore;
@@ -299,8 +343,16 @@ export function exportCSV() {
     'Atividade Principal (CNAE)', 'Tipo de Estrutura',
     'Score Resistência Física', 'Score Vulnerabilidade Incêndio', 'Nível Vulnerabilidade',
     'Score Risco Ambiental', 'Nível Risco Ambiental',
-    'Status Anti-Corrupção', 'Detalhe Anti-Corrupção',
-    'Status IBAMA', 'Gaps de Segurança',
+    'Status Anti-Corrupção (CEIS)', 'Detalhe Anti-Corrupção',
+    'Status CNEP', 'Detalhe CNEP',
+    'Acordo de Leniência',
+    'Status IBAMA', 'Qtd Embargos IBAMA',
+    'ESG Risk Index', 'Nível ESG', 'Prioridade de Campo',
+    'ESG — Componente Ambiental', 'ESG — Componente Social/Gov', 'ESG — Poder Corporativo',
+    'PEPs no Quadro Societário', 'Concentração Societária', 'Influência Societária',
+    'Plano de Ação — Ações Imediatas', 'Plano de Ação — Documentos a Solicitar',
+    'Plano de Ação — Autoridades a Notificar', 'Plano de Ação — Referências Legais',
+    'Gaps de Segurança',
     'Sócios (mascarados)', 'Justificativa Técnica', 'Última Atualização'
   ];
 
@@ -311,9 +363,22 @@ export function exportCSV() {
     r.resistanceScore, r.vulnerabilityScore, r.vulnerabilityLabel,
     r.envScore, r.envLabel,
     r.antiCorruptionStatus, r.antiCorruptionDetail,
-    r.ibamaStatus,
-    r.securityGaps.map(g => `${g.title}: ${g.description}`).join(' | '),
-    r.socios.map(s => `${s.nome} (${s.cpfMasked})`).join(' | '),
+    r.cnepStatus || 'Pendente', r.cnepDetail || '',
+    r.leniencyStatus || 'Pendente',
+    r.ibamaStatus, (r.ibamaEntries || []).length,
+    r.esgScore || 0, r.esgLabel || '—', r.esgFieldPriority || '—',
+    r.esgComponents?.environmental || 0,
+    r.esgComponents?.socialGovernance || 0,
+    r.esgComponents?.corporatePower || 0,
+    r.shareholderAnalysis?.pepCount || 0,
+    r.shareholderAnalysis?.concentrationScore || 0,
+    r.shareholderAnalysis?.influenceScore || 0,
+    (r.fieldActionPlan?.immediateActions || []).join(' | '),
+    (r.fieldActionPlan?.documentsToRequest || []).join(' | '),
+    (r.fieldActionPlan?.authoritiesToNotify || []).join(' | '),
+    (r.fieldActionPlan?.legalReferences || []).join(' | '),
+    (r.securityGaps || []).map(g => `${g.title}: ${g.description}`).join(' | '),
+    (r.socios || []).map(s => `${s.nome} (${s.cpfMasked})`).join(' | '),
     r.resistanceJustification,
     r.lastUpdated,
   ]);
@@ -458,4 +523,11 @@ function fmtCNPJ(cnpj) {
 function normalize(str) {
   return (str || '').toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '';
+  const m = String(dateStr).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${m[3]}/${m[2]}/${m[1]}`;
+  return dateStr;
 }
