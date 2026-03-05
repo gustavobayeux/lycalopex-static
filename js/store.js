@@ -16,6 +16,7 @@ import { runESGIntelligence } from './esg-intelligence.js';
 import { calcResistanceScore, calcVulnerabilityScore, calcEnvScore, getCNAEProfile, maskCPF, hashCPF } from './scoring.js';
 import { calcUrbanExploringScore } from './urban-exploring.js';
 import { analyzeSecurityGaps } from './gap-analysis.js';
+import { runProcurementIntelligence } from './comprasnet.js';
 
 // ── Cache helpers ─────────────────────────────────────────────────────────────
 
@@ -242,6 +243,13 @@ async function buildRecord(raw, cnpj) {
     apiKey
   );
 
+  // Government procurement intelligence (COMPRASNET + Portal da Transparência)
+  const procurementIntelligence = await runProcurementIntelligence(
+    partialRecord,
+    esgIntelligence.shareholderAnalysis?.pepCount || 0,
+    apiKey
+  );
+
   return {
     ...partialRecord,
     securityGaps,
@@ -258,6 +266,20 @@ async function buildRecord(raw, cnpj) {
     esgComponents: esgIntelligence.esgIndex.components,
     esgActionItems: esgIntelligence.esgIndex.actionItems,
     fieldActionPlan: esgIntelligence.fieldActionPlan,
+    // Procurement Intelligence fields
+    procurementRiskScore: procurementIntelligence.procurementRiskScore,
+    procurementRiskLabel: procurementIntelligence.procurementRiskLabel,
+    procurementRiskFactors: procurementIntelligence.riskFactors,
+    procurementContractsFound: procurementIntelligence.contractsFound,
+    contractCount: procurementIntelligence.contractCount,
+    contractTotalValue: procurementIntelligence.contractTotalValue,
+    procurementSpendingFound: procurementIntelligence.spendingFound,
+    spendingCount: procurementIntelligence.spendingCount,
+    spendingTotalValue: procurementIntelligence.spendingTotalValue,
+    procurementContractsDetail: procurementIntelligence.contractsDetail,
+    procurementSpendingDetail: procurementIntelligence.spendingDetail,
+    procurementActionItems: procurementIntelligence.actionItems,
+    procurementSummary: procurementIntelligence.summary,
   };
 }
 
@@ -352,6 +374,10 @@ export function exportCSV() {
     'PEPs no Quadro Societário', 'Concentração Societária', 'Influência Societária',
     'Plano de Ação — Ações Imediatas', 'Plano de Ação — Documentos a Solicitar',
     'Plano de Ação — Autoridades a Notificar', 'Plano de Ação — Referências Legais',
+    'Risco de Procurement (0-100)', 'Nível de Risco de Procurement',
+    'Contratos Federais — Quantidade', 'Contratos Federais — Valor Total',
+    'Despesas Federais — Quantidade', 'Despesas Federais — Valor Total',
+    'Resumo de Procurement', 'Fatores de Risco de Procurement',
     'Gaps de Segurança',
     'Sócios (mascarados)', 'Justificativa Técnica', 'Última Atualização'
   ];
@@ -373,6 +399,14 @@ export function exportCSV() {
     r.shareholderAnalysis?.pepCount || 0,
     r.shareholderAnalysis?.concentrationScore || 0,
     r.shareholderAnalysis?.influenceScore || 0,
+    r.procurementRiskScore || 0,
+    r.procurementRiskLabel || '—',
+    r.contractCount || 0,
+    r.contractTotalValue || 0,
+    r.spendingCount || 0,
+    r.spendingTotalValue || 0,
+    r.procurementSummary || '',
+    (r.procurementRiskFactors || []).join(' | '),
     (r.fieldActionPlan?.immediateActions || []).join(' | '),
     (r.fieldActionPlan?.documentsToRequest || []).join(' | '),
     (r.fieldActionPlan?.authoritiesToNotify || []).join(' | '),

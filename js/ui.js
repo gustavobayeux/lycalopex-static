@@ -456,6 +456,36 @@ function buildDetailPanel(r) {
             <p class="data-note">Score baseado em análise de OpenStreetMap.</p>
           </div>
 
+          <h3 class="detail-section-title mt">Inteligência de Compras Públicas (COMPRASNET)</h3>
+          <div class="env-block">
+            <div class="big-score ${esgColorClass(r.procurementRiskLabel || '')}">
+              <span class="big-score-number">${r.procurementRiskScore ?? '—'}</span>
+              <span class="big-score-label">${r.procurementRiskLabel || 'Pendente'}</span>
+            </div>
+            <p class="ac-detail">${escHtml(r.procurementSummary || 'Consulta de contratos e despesas federais pendente ou não configurada.')}</p>
+            <div class="breakdown-list">
+              <div class="breakdown-item">
+                <span>Contratos federais (quantidade)</span>
+                <span class="mono">${r.contractCount || 0}</span>
+              </div>
+              <div class="breakdown-item">
+                <span>Contratos federais (valor total)</span>
+                <span class="mono">R$ ${(r.contractTotalValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
+              <div class="breakdown-item">
+                <span>Despesas federais (quantidade)</span>
+                <span class="mono">${r.spendingCount || 0}</span>
+              </div>
+              <div class="breakdown-item">
+                <span>Despesas federais (valor total)</span>
+                <span class="mono">R$ ${(r.spendingTotalValue || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+              </div>
+            </div>
+            ${(r.procurementRiskFactors && r.procurementRiskFactors.length)
+              ? `<ul class="env-indicators">${r.procurementRiskFactors.map(f => `<li>${escHtml(f)}</li>`).join('')}</ul>`
+              : '<p class="data-note">Configure chave do Portal da Transparência para habilitar inteligência completa de compras públicas.</p>'}
+          </div>
+
           <h3 class="detail-section-title mt">Inteligência ESG — Plano de Ação para Campo</h3>
           <div class="esg-block">
             <div class="big-score ${esgColorClass(r.esgLabel)}">
