@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lycalopex — Monitoramento Agro-Industrial</title>
+  <meta name="description" content="Plataforma de monitoramento estratégico de estruturas agro-industriais. Cruzamento de CNPJs, análise de sócios, score de vulnerabilidade a incêndio e indicadores ambientais." />
+
+  <!-- Fonts: JetBrains Mono + IBM Plex Sans -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+
+  <!-- App stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header class="app-header">
+    <div class="header-brand">
+      <div class="brand-logo" aria-hidden="true"></div>
+      <span class="brand-name">Lycalopex</span>
+      <span class="brand-tagline">Monitoramento Agro-Industrial</span>
+    </div>
+    <div class="header-status">
+      <span><span class="status-dot"></span>Sistema ativo</span>
+      <span>Fontes: Receita Federal · Brasil.IO · Portal da Transparência</span>
+    </div>
+  </header>
+
+  <!-- ── Hero ───────────────────────────────────────────────────────────── -->
+  <section class="hero-banner" aria-label="Introdução">
+    <div class="hero-bg" role="presentation" aria-hidden="true"></div>
+    <div class="hero-content">
+      <p class="hero-eyebrow">Inteligência de dados públicos</p>
+      <h1 class="hero-title">
+        Estruturas Agro-Industriais<br />
+        <span>por Score de Vulnerabilidade</span>
+      </h1>
+      <p class="hero-desc">
+        Consulta e cruzamento de CNPJs de estruturas agro-industriais com dados públicos da Receita Federal,
+        Brasil.IO e Portal da Transparência. Score de vulnerabilidade a incêndio calculado com base em
+        porte, atividade CNAE, localização e modernidade da estrutura. Dados de sócios com CPF mascarado.
+        Nenhum dado privado ou autenticação necessária.
+      </p>
+    </div>
+  </section>
+
+  <!-- ── Error banner ───────────────────────────────────────────────────── -->
+  <div id="error-banner" class="error-banner hidden" role="alert" aria-live="assertive"></div>
+
+  <!-- ── CNPJ input zone ────────────────────────────────────────────────── -->
+  <section class="input-zone" aria-label="Entrada de CNPJs">
+    <div class="input-zone-inner">
+      <div style="flex:1;min-width:280px">
+        <p class="input-label">CNPJs para consultar (um por linha, ou separados por vírgula)</p>
+        <textarea
+          id="cnpj-input"
+          class="cnpj-textarea"
+          placeholder="Ex: 02.916.265/0001-60&#10;01.838.723/0001-27&#10;..."
+          aria-label="Lista de CNPJs"
+          spellcheck="false"
+        ></textarea>
+      </div>
+      <div class="input-actions">
+        <button id="btn-load" class="btn btn-primary" type="button">
+          ▶ Consultar CNPJs
+        </button>
+        <button id="btn-demo" class="btn btn-secondary" type="button">
+          ⬡ Carregar Demo
+        </button>
+        <button id="btn-export" class="btn btn-export" type="button" title="Exportar resultados em CSV (Ctrl+E)">
+          ↓ Exportar CSV
+        </button>
+      </div>
+      <div style="align-self:flex-end;padding-bottom:0.25rem">
+        <p class="input-label" style="margin-bottom:0.35rem">Filtrar por cidade</p>
+        <input
+          id="filter-city"
+          type="text"
+          class="filter-input"
+          placeholder="Ex: Sorriso, Rondonópolis..."
+          aria-label="Filtrar por cidade"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+  </section>
+
+  <!-- ── Stats bar ──────────────────────────────────────────────────────── -->
+  <div id="stats-bar" class="stats-bar" aria-live="polite" aria-label="Resumo estatístico">
+    <div class="stat-item">
+      <span class="stat-value mono">0</span>
+      <span class="stat-label">Total carregado</span>
+    </div>
+  </div>
+
+  <!-- ── Filter bar ─────────────────────────────────────────────────────── -->
+  <div class="filter-bar" role="search" aria-label="Filtros">
+    <span class="filter-label">Filtros:</span>
+
+    <select id="filter-type" class="filter-select" aria-label="Tipo de estrutura">
+      <option value="">Todos os tipos</option>
+    </select>
+
+    <select id="filter-anticorr" class="filter-select" aria-label="Status anti-corrupção">
+      <option value="">Todos os status</option>
+      <option value="found">Somente alertas</option>
+      <option value="clean">Somente verificados</option>
+    </select>
+
+    <div class="filter-sep" aria-hidden="true"></div>
+
+    <span class="record-count" id="record-count" aria-live="polite">0 estruturas</span>
+  </div>
+
+  <!-- ── Main table ─────────────────────────────────────────────────────── -->
+  <main class="table-wrapper" role="main">
+    <table class="data-table" aria-label="Estruturas agro-industriais">
+      <thead>
+        <tr>
+          <th class="col-rank" aria-label="Posição">#</th>
+          <th class="col-cnpj">CNPJ</th>
+          <th class="col-name" data-sort="razaoSocial" tabindex="0" role="columnheader" aria-sort="none">
+            Razão Social / Atividade
+          </th>
+          <th class="col-city" data-sort="municipio" tabindex="0" role="columnheader" aria-sort="none">
+            Município
+          </th>
+          <th class="col-vuln" data-sort="vulnerability" tabindex="0" role="columnheader" aria-sort="descending">
+            Vuln. Incêndio ↓
+          </th>
+          <th class="col-resist" data-sort="resistance" tabindex="0" role="columnheader" aria-sort="none">
+            Resistência
+          </th>
+          <th class="col-env" data-sort="env" tabindex="0" role="columnheader" aria-sort="none">
+            Risco Amb.
+          </th>
+          <th class="col-ac">
+            Anti-Corrupção
+          </th>
+          <th class="col-ue" data-sort="ue" tabindex="0" role="columnheader" aria-sort="none">
+            Acesso Não-Aut.
+          </th>
+          <th class="col-expand" aria-label="Expandir detalhes"></th>
+        </tr>
+      </thead>
+      <tbody id="table-body">
+        <tr class="empty-state">
+          <td colspan="10">
+            <div class="empty-inner">
+              <div class="empty-icon">⬡</div>
+              <p>Nenhuma estrutura carregada.</p>
+              <p class="empty-sub">Informe CNPJs no campo acima ou clique em <strong>Carregar Demo</strong>.</p>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </main>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────── -->
+  <footer class="app-footer">
+    <span class="footer-text">
+      Lycalopex v1.0 · Dados exclusivamente de fontes públicas · CPFs exibidos apenas com máscara
+    </span>
+    <div class="footer-sources">
+      <a href="https://www.receitaws.com.br/" target="_blank" rel="noopener">ReceitaWS</a>
+      <a href="https://brasil.io/dataset/socios-brasil/" target="_blank" rel="noopener">Brasil.IO</a>
+      <a href="https://portaldatransparencia.gov.br/sancoes" target="_blank" rel="noopener">Portal da Transparência</a>
+      <a href="https://servicodados.ibge.gov.br/api/docs/" target="_blank" rel="noopener">IBGE</a>
+    </div>
+  </footer>
+
+</div><!-- .app-wrapper -->
+
+<!-- ── Loading overlay ──────────────────────────────────────────────────── -->
+<div id="loading-overlay" class="loading-overlay hidden" role="status" aria-live="polite">
+  <div class="loading-spinner" aria-hidden="true"></div>
+  <p id="loading-msg" class="loading-text">Carregando...</p>
+  <div class="loading-bar" aria-hidden="true">
+    <div class="loading-bar-fill"></div>
+  </div>
+  <p class="loading-text" style="font-size:0.68rem;opacity:0.6">
+    ReceitaWS limita a 3 consultas/minuto no plano gratuito.<br />
+    Aguarde entre as consultas para evitar bloqueio.
+  </p>
+</div>
+
+<!-- ── Toast notification ───────────────────────────────────────────────── -->
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<!-- ── App entry (ES modules) ───────────────────────────────────────────── -->
+<script type="module" src="js/app.js"></script>
+
+</body>
+</html>

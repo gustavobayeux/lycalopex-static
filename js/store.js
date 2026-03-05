@@ -1,0 +1,338 @@
+/**
+ * store.js — Application state management for Lycalopex
+ *
+ * Manages:
+ *   - Loaded company records
+ *   - Filter state (city, type, score range, anti-corruption)
+ *   - Sort order (default: highest vulnerability first)
+ *   - Loading/error states
+ *   - SessionStorage cache (1h TTL)
+ */
+
+'use strict';
+
+import { fetchCNPJ, extractSocios, checkSancoesCNPJ, checkAntiCorrupcaoBR, sequentialQueue } from './api.js';
+import { calcResistanceScore, calcVulnerabilityScore, calcEnvScore, getCNAEProfile, maskCPF, hashCPF } from './scoring.js';
+import { calcUrbanExploringScore } from './urban-exploring.js';
+
+// ── Cache helpers ─────────────────────────────────────────────────────────────
+
+const CACHE_PREFIX = 'lycalopex_v2_';
+const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+function cacheGet(key) {
+  try {
+    const raw = sessionStorage.getItem(CACHE_PREFIX + key);
+    if (!raw) return null;
+    const { ts, data } = JSON.parse(raw);
+    if (Date.now() - ts > CACHE_TTL_MS) {
+      sessionStorage.removeItem(CACHE_PREFIX + key);
+      return null;
+    }
+    return data;
+  } catch { return null; }
+}
+
+function cacheSet(key, data) {
+  try {
+    sessionStorage.setItem(CACHE_PREFIX + key, JSON.stringify({ ts: Date.now(), data }));
+  } catch { /* storage full */ }
+}
+
+// ── Application state ─────────────────────────────────────────────────────────
+
+export const state = {
+  /** @type {CompanyRecord[]} */
+  records: [],
+  /** @type {CompanyRecord[]} */
+  filtered: [],
+  filters: {
+    city: '',
+    type: '',
+    minScore: 0,
+    maxScore: 100,
+    antiCorruption: '',
+  },
+  sort: {
+    field: 'vulnerability',
+    dir: 'desc',
+  },
+  loading: false,
+  loadingMessage: '',
+  error: null,
+  availableCities: [],
+  availableTypes: [],
+  totalLoaded: 0,
+};
+
+// ── Pub/sub ───────────────────────────────────────────────────────────────────
+
+const listeners = new Set();
+
+export function subscribe(fn) {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+}
+
+function notify() {
+  listeners.forEach(fn => fn(state));
+}
+
+// ── Data loading ──────────────────────────────────────────────────────────────
+
+/**
+ * Load company data from a list of CNPJs.
+ * Processes sequentially to respect API rate limits.
+ * @param {string[]} cnpjList
+ */
+export async function loadCNPJs(cnpjList) {
+  state.loading = true;
+  state.error = null;
+  state.records = [];
+  state.totalLoaded = 0;
+  state.loadingMessage = 'Iniciando consulta...';
+  notify();
+
+  const unique = [...new Set(cnpjList.map(c => c.replace(/\D/g, '')).filter(c => c.length === 14))];
+
+  const tasks = unique.map((cnpj, i) => async () => {
+    state.loadingMessage = `Consultando CNPJ ${i + 1}/${unique.length}: ${fmtCNPJ(cnpj)}`;
+    notify();
+
+    const cached = cacheGet(`cnpj_${cnpj}`);
+    if (cached) {
+      state.records.push(cached);
+      state.totalLoaded = state.records.length;
+      updateAvailableFilters();
+      applyFilters();
+      notify();
+      return cached;
+    }
+
+    const raw = await fetchCNPJ(cnpj);
+    if (!raw) {
+      console.warn(`[Lycalopex] Failed to fetch CNPJ: ${cnpj}`);
+      return null;
+    }
+
+    const record = await buildRecord(raw, cnpj);
+    cacheSet(`cnpj_${cnpj}`, record);
+    state.records.push(record);
+    state.totalLoaded = state.records.length;
+    updateAvailableFilters();
+    applyFilters();
+    notify();
+    return record;
+  });
+
+  // 800ms between requests to be polite to public APIs
+  await sequentialQueue(tasks, 800);
+
+  state.loading = false;
+  state.loadingMessage = '';
+  updateAvailableFilters();
+  applyFilters();
+  notify();
+}
+
+/**
+ * Build a full CompanyRecord from normalized API data.
+ * @param {object} raw - Normalized company data from api.js
+ * @param {string} cnpj - Clean 14-digit CNPJ
+ * @returns {Promise<CompanyRecord>}
+ */
+async function buildRecord(raw, cnpj) {
+  const profile = getCNAEProfile(raw);
+  const { score: resistance, breakdown, justification } = calcResistanceScore(raw);
+  const { score: vulnerability, label: vulnLabel } = calcVulnerabilityScore(raw);
+  const { score: envScore, label: envLabel, indicators: envIndicators } = calcEnvScore(raw);
+
+  // Extract partners from the API response (already embedded in cnpj.ws)
+  const sociosRaw = extractSocios(raw);
+  const socios = sociosRaw.map(s => ({
+    nome: s.nome,
+    cpfMasked: maskCPF(s.cpfCnpj),
+    cpfHash: hashCPF(s.cpfCnpj),
+    qualificacao: s.qualificacao,
+    dataEntrada: s.dataEntrada,
+    tipo: s.tipo,
+  }));
+
+  // Anti-corruption check
+  const acResult = await checkSancoesCNPJ(cnpj);
+
+  // Urban exploring susceptibility
+  const ueResult = await calcUrbanExploringScore(raw);
+
+  return {
+    cnpj: fmtCNPJ(cnpj),
+    razaoSocial: raw.nome || '—',
+    nomeFantasia: raw.fantasia || '',
+    situacao: raw.situacao || '—',
+    abertura: raw.abertura || '—',
+    porte: raw.porte || '—',
+    capitalSocial: raw.capital_social || '0',
+    logradouro: raw.logradouro || '',
+    numero: raw.numero || '',
+    complemento: raw.complemento || '',
+    bairro: raw.bairro || '',
+    municipio: raw.municipio || '',
+    uf: raw.uf || '',
+    cep: raw.cep || '',
+    email: raw.email || '',
+    telefone: raw.telefone || '',
+    cnaeLabel: profile.label,
+    cnaeType: profile.type,
+    socios,
+    resistanceScore: resistance,
+    resistanceBreakdown: breakdown,
+    resistanceJustification: justification,
+    vulnerabilityScore: vulnerability,
+    vulnerabilityLabel: vulnLabel,
+    envScore,
+    envLabel,
+    envIndicators,
+    antiCorruptionStatus: acResult.status,
+    antiCorruptionDetail: acResult.detail,
+    urbanExploringScore: ueResult.score,
+    urbanExploringLabel: ueResult.label,
+    urbanExploringBreakdown: ueResult.breakdown,
+    urbanExploringIndicators: ueResult.indicators,
+    lastUpdated: new Date().toLocaleDateString('pt-BR'),
+  };
+}
+
+// ── Filters & sort ────────────────────────────────────────────────────────────
+
+export function setFilter(key, value) {
+  state.filters[key] = value;
+  applyFilters();
+  notify();
+}
+
+export function setSort(field, dir) {
+  state.sort = { field, dir };
+  applyFilters();
+  notify();
+}
+
+export function applyFilters() {
+  let result = [...state.records];
+
+  if (state.filters.city) {
+    const q = normalize(state.filters.city);
+    result = result.filter(r =>
+      normalize(r.municipio).includes(q) || normalize(r.uf).includes(q)
+    );
+  }
+
+  if (state.filters.type) {
+    result = result.filter(r => r.cnaeType === state.filters.type);
+  }
+
+  result = result.filter(r =>
+    r.vulnerabilityScore >= state.filters.minScore &&
+    r.vulnerabilityScore <= state.filters.maxScore
+  );
+
+  if (state.filters.antiCorruption) {
+    result = result.filter(r => {
+      if (state.filters.antiCorruption === 'found') return r.antiCorruptionStatus === 'Alerta';
+      if (state.filters.antiCorruption === 'clean') return r.antiCorruptionStatus === 'Verificado';
+      return true;
+    });
+  }
+
+  // Sort
+  result.sort((a, b) => {
+    let av, bv;
+    switch (state.sort.field) {
+      case 'vulnerability': av = a.vulnerabilityScore; bv = b.vulnerabilityScore; break;
+      case 'resistance':    av = a.resistanceScore;    bv = b.resistanceScore;    break;
+      case 'env':           av = a.envScore;           bv = b.envScore;           break;
+      case 'razaoSocial':   av = a.razaoSocial;        bv = b.razaoSocial;        break;
+      case 'municipio':     av = a.municipio;          bv = b.municipio;          break;
+      default:              av = a.vulnerabilityScore; bv = b.vulnerabilityScore;
+    }
+    if (typeof av === 'string') {
+      return state.sort.dir === 'asc'
+        ? av.localeCompare(bv, 'pt-BR')
+        : bv.localeCompare(av, 'pt-BR');
+    }
+    return state.sort.dir === 'asc' ? av - bv : bv - av;
+  });
+
+  state.filtered = result;
+}
+
+function updateAvailableFilters() {
+  state.availableCities = [...new Set(state.records.map(r => r.municipio).filter(Boolean))].sort();
+  state.availableTypes  = [...new Set(state.records.map(r => r.cnaeType).filter(Boolean))].sort();
+}
+
+// ── CSV export ────────────────────────────────────────────────────────────────
+
+export function exportCSV() {
+  const headers = [
+    'CNPJ', 'Razão Social', 'Nome Fantasia', 'Situação', 'Abertura', 'Porte',
+    'Capital Social', 'Logradouro', 'Número', 'Bairro', 'Município', 'UF', 'CEP',
+    'Atividade Principal (CNAE)', 'Tipo de Estrutura',
+    'Score Resistência Física', 'Score Vulnerabilidade Incêndio', 'Nível Vulnerabilidade',
+    'Score Risco Ambiental', 'Nível Risco Ambiental',
+    'Status Anti-Corrupção', 'Detalhe Anti-Corrupção',
+    'Sócios (mascarados)', 'Justificativa Técnica', 'Última Atualização'
+  ];
+
+  const rows = state.filtered.map(r => [
+    r.cnpj, r.razaoSocial, r.nomeFantasia, r.situacao, r.abertura, r.porte,
+    r.capitalSocial, r.logradouro, r.numero, r.bairro, r.municipio, r.uf, r.cep,
+    r.cnaeLabel, r.cnaeType,
+    r.resistanceScore, r.vulnerabilityScore, r.vulnerabilityLabel,
+    r.envScore, r.envLabel,
+    r.antiCorruptionStatus, r.antiCorruptionDetail,
+    r.socios.map(s => `${s.nome} (${s.cpfMasked})`).join(' | '),
+    r.resistanceJustification,
+    r.lastUpdated,
+  ]);
+
+  const csv = [headers, ...rows]
+    .map(row => row.map(cell => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
+    .join('\n');
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `lycalopex_${new Date().toISOString().slice(0, 10)}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// ── Demo CNPJ list ────────────────────────────────────────────────────────────
+
+export const DEMO_CNPJS = [
+  '02916265000160', // JBS S/A
+  '01838723000127', // BRF S/A
+  '61064929000100', // Copersucar
+  '08070508000178', // Raízen Energia
+  '77294254000164', // Amaggi
+  '75593551000107', // Coamo
+  '76606564000186', // Cocamar
+  '03853896000140', // Marfrig
+  '67620377000114', // Minerva Foods
+  '47508411000156', // Cargill Agrícola
+];
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function fmtCNPJ(cnpj) {
+  const c = cnpj.replace(/\D/g, '');
+  return c.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+}
+
+function normalize(str) {
+  return (str || '').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}

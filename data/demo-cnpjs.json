@@ -1,0 +1,17 @@
+{
+  "_comment": "Demo CNPJ list for Lycalopex. All public data from Receita Federal.",
+  "_source": "Receita Federal do Brasil — dados públicos",
+  "_updated": "2026-03",
+  "cnpjs": [
+    { "cnpj": "02916265000160", "label": "JBS S/A — Frigorífico" },
+    { "cnpj": "01838723000127", "label": "BRF S/A — Processamento de Aves" },
+    { "cnpj": "61064929000100", "label": "Copersucar — Açúcar e Etanol" },
+    { "cnpj": "08070508000178", "label": "Raízen Energia — Usina de Cana" },
+    { "cnpj": "77294254000164", "label": "Amaggi — Grãos e Soja" },
+    { "cnpj": "75593551000107", "label": "Coamo — Cooperativa Agroindustrial" },
+    { "cnpj": "76606564000186", "label": "Cocamar — Cooperativa" },
+    { "cnpj": "03853896000140", "label": "Marfrig Global Foods" },
+    { "cnpj": "67620377000114", "label": "Minerva Foods" },
+    { "cnpj": "47508411000156", "label": "Cargill Agrícola S/A" }
+  ]
+}

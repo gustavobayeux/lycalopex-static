@@ -1,0 +1,19 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Environment (if you add a backend later)
+.env
+.env.local
+
+# Node (if you add tooling later)
+node_modules/
