@@ -78,7 +78,7 @@ export function subscribe(fn) {
   return () => listeners.delete(fn);
 }
 
-function notify() {
+export function notify() {
   listeners.forEach(fn => fn(state));
 }
 

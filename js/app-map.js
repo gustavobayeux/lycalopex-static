@@ -6,7 +6,7 @@
 
 'use strict';
 
-import { state, notify, filterAndSort, exportCSV, loadCNPJs } from './store.js';
+import { state, notify, exportCSV, loadCNPJs } from './store.js';
 import { renderTable, showToast, renderStats } from './ui.js';
 import {
   getAllRegions,
