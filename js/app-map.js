@@ -6,7 +6,7 @@
 
 'use strict';
 
-import { state, notify, buildRecord, filterAndSort, exportCSV } from './store.js';
+import { state, notify, filterAndSort, exportCSV, loadCNPJs } from './store.js';
 import { renderTable, showToast, renderStats } from './ui.js';
 import {
   getAllRegions,
@@ -49,7 +49,27 @@ document.addEventListener('DOMContentLoaded', () => {
   attachEventListeners();
 });
 
-function initializeUI() {
+async function initializeUI() {
+  // Load regional IBAMA data
+  try {
+    const response = await fetch('data/ibama-demo.json');
+    if (response.ok) {
+      const data = await response.json();
+      // Convert CNPJ-keyed data to city-keyed data
+      const cityData = {};
+      for (const [cnpj, entries] of Object.entries(data)) {
+        for (const entry of entries) {
+          const cityKey = entry.municipio + ', ' + entry.uf;
+          if (!cityData[cityKey]) cityData[cityKey] = [];
+          cityData[cityKey].push({ cnpj: cnpj, municipio: entry.municipio, uf: entry.uf });
+        }
+      }
+      state.regionalIbamaData = cityData;
+    }
+  } catch (e) {
+    console.warn('Erro ao carregar dados IBAMA:', e.message);
+  }
+
   // Render initial region map
   regionMapContainer.innerHTML = buildRegionMap();
   renderTypeFilter();
@@ -194,14 +214,8 @@ async function loadCompaniesForCity(city, state) {
     state.loadingMessage = `Carregando ${cnpjsInCity.length} empresa(s)...`;
     notify();
 
-    for (const cnpj of cnpjsInCity) {
-      try {
-        const record = await buildRecord(cnpj);
-        state.records.push(record);
-      } catch (e) {
-        console.warn(`Erro ao carregar ${cnpj}:`, e.message);
-      }
-    }
+    // Use loadCNPJs to load all companies
+    await loadCNPJs(cnpjsInCity);
 
     state.loading = false;
     state.filtered = [...state.records];
