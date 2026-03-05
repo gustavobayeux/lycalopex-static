@@ -7,41 +7,50 @@
 
 'use strict';
 
-// DOM Elements
-const cityInput = document.getElementById('cityInput');
-const searchBtn = document.getElementById('searchBtn');
-const loadingIndicator = document.getElementById('loadingIndicator');
-const loadingMessage = document.getElementById('loadingMessage');
-const errorAlert = document.getElementById('errorAlert');
-const resultsSection = document.getElementById('resultsSection');
-const companyGrid = document.getElementById('companyGrid');
-const totalCount = document.getElementById('totalCount');
-const highRiskCount = document.getElementById('highRiskCount');
-const pagination = document.getElementById('pagination');
-const prevBtn = document.getElementById('prevBtn');
-const nextBtn = document.getElementById('nextBtn');
-const pageInfo = document.getElementById('pageInfo');
-const detailModal = document.getElementById('detailModal');
-const detailContent = document.getElementById('detailContent');
-const modalClose = document.querySelector('.modal-close');
-const modalOverlay = document.querySelector('.modal-overlay');
+// DOM Elements (will be initialized after DOM loads)
+let cityInput, searchBtn, loadingIndicator, loadingMessage, errorAlert, resultsSection, companyGrid, totalCount, highRiskCount, pagination, prevBtn, nextBtn, pageInfo, detailModal, detailContent, modalClose, modalOverlay;
 
 // State
 let currentPage = 1;
 const pageSize = 9;
 let allCompanies = [];
 
-// Event Listeners
-searchBtn.addEventListener('click', handleSearch);
-cityInput.addEventListener('keypress', (e) => {
-  if (e.key === 'Enter') handleSearch();
+// Initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  // Get DOM Elements
+  cityInput = document.getElementById('cityInput');
+  searchBtn = document.getElementById('searchBtn');
+  loadingIndicator = document.getElementById('loadingIndicator');
+  loadingMessage = document.getElementById('loadingMessage');
+  errorAlert = document.getElementById('errorAlert');
+  resultsSection = document.getElementById('resultsSection');
+  companyGrid = document.getElementById('companyGrid');
+  totalCount = document.getElementById('totalCount');
+  highRiskCount = document.getElementById('highRiskCount');
+  pagination = document.getElementById('pagination');
+  prevBtn = document.getElementById('prevBtn');
+  nextBtn = document.getElementById('nextBtn');
+  pageInfo = document.getElementById('pageInfo');
+  detailModal = document.getElementById('detailModal');
+  detailContent = document.getElementById('detailContent');
+  modalClose = document.querySelector('.modal-close');
+  modalOverlay = document.querySelector('.modal-overlay');
+
+  // Add Event Listeners
+  searchBtn.addEventListener('click', handleSearch);
+  cityInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') handleSearch();
+  });
+
+  prevBtn.addEventListener('click', () => setPage(currentPage - 1));
+  nextBtn.addEventListener('click', () => setPage(currentPage + 1));
+
+  modalClose.addEventListener('click', closeModal);
+  modalOverlay.addEventListener('click', closeModal);
+
+  console.log('Lycalopex v3 — Environmental Intelligence for Activists');
+  console.log('Ready to search for companies with environmental risk');
 });
-
-prevBtn.addEventListener('click', () => setPage(currentPage - 1));
-nextBtn.addEventListener('click', () => setPage(currentPage + 1));
-
-modalClose.addEventListener('click', closeModal);
-modalOverlay.addEventListener('click', closeModal);
 
 // Search Handler
 async function handleSearch() {
@@ -176,8 +185,8 @@ function renderCard(company) {
       ` : ''}
 
       <div class="card-actions">
-        <button class="btn btn-primary" onclick="event.stopPropagation()">Ver Detalhes</button>
-        <button class="btn btn-primary" onclick="event.stopPropagation()">Plano de Ação</button>
+        <button class="btn btn-primary">Ver Detalhes</button>
+        <button class="btn btn-primary">Plano de Ação</button>
       </div>
     </div>
   `;
@@ -349,7 +358,3 @@ function showError(message) {
 function clearError() {
   errorAlert.classList.add('hidden');
 }
-
-// Initialize
-console.log('Lycalopex v3 — Environmental Intelligence for Activists');
-console.log('Ready to search for companies with environmental risk');
